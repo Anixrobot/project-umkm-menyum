@@ -7,7 +7,12 @@ import {
   ChevronRight,
 } from 'lucide-react';
 
-export default function Sidebar({ activeTab, setActiveTab, pendingOrdersCount = 0 }) {
+export default function Sidebar({
+  activeTab,
+  setActiveTab,
+  pendingOrdersCount = 0,
+  isDbConnected = false,
+}) {
   const menuItems = [
     {
       id: 'kasir',
@@ -60,13 +65,29 @@ export default function Sidebar({ activeTab, setActiveTab, pendingOrdersCount = 
       <div className="mx-4 my-3 px-3 py-2 bg-slate-800/60 rounded-lg border border-slate-700/50 flex items-center justify-between text-xs">
         <div className="flex items-center gap-2">
           <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            <span
+              className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                isDbConnected ? 'bg-emerald-400' : 'bg-amber-400'
+              }`}
+            ></span>
+            <span
+              className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
+                isDbConnected ? 'bg-emerald-500' : 'bg-amber-500'
+              }`}
+            ></span>
           </span>
-          <span className="text-slate-300 font-medium">Sistem Kasir Aktif</span>
+          <span className="text-slate-300 font-medium text-[11px]">
+            {isDbConnected ? 'Supabase Terhubung' : 'Local / Offline'}
+          </span>
         </div>
-        <span className="text-[10px] text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded font-mono font-semibold">
-          v4.0
+        <span
+          className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-semibold ${
+            isDbConnected
+              ? 'text-emerald-400 bg-emerald-400/10'
+              : 'text-amber-400 bg-amber-400/10'
+          }`}
+        >
+          {isDbConnected ? 'LIVE' : 'DEMO'}
         </span>
       </div>
 
