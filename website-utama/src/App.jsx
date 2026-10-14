@@ -1,122 +1,237 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useState, useEffect } from 'react';
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
+import Home from './pages/Home';
+import Profil from './pages/Profil';
+import Menu from './pages/Menu';
+import Testimoni from './pages/Testimoni';
+import Artikel from './pages/Artikel';
+import AdminCms from './pages/AdminCms';
+import { initialProducts, initialReviews, initialArticles } from './data/initialData';
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const [activePage, setActivePage] = useState('home');
+
+  // State with LocalStorage Persistence
+  const [products, setProducts] = useState(() => {
+    try {
+      const saved = localStorage.getItem('menyum_products');
+      return saved ? JSON.parse(saved) : initialProducts;
+    } catch {
+      return initialProducts;
+    }
+  });
+
+  const [articles, setArticles] = useState(() => {
+    try {
+      const saved = localStorage.getItem('menyum_articles');
+      return saved ? JSON.parse(saved) : initialArticles;
+    } catch {
+      return initialArticles;
+    }
+  });
+
+  const [reviews, setReviews] = useState(() => {
+    try {
+      const saved = localStorage.getItem('menyum_reviews');
+      return saved ? JSON.parse(saved) : initialReviews;
+    } catch {
+      return initialReviews;
+    }
+  });
+
+  const [orders, setOrders] = useState(() => {
+    try {
+      const saved = localStorage.getItem('menyum_orders');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [cart, setCart] = useState(() => {
+    try {
+      const saved = localStorage.getItem('menyum_cart');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [selectedArticle, setSelectedArticle] = useState(null);
+
+  // Sync state to LocalStorage
+  useEffect(() => {
+    localStorage.setItem('menyum_products', JSON.stringify(products));
+  }, [products]);
+
+  useEffect(() => {
+    localStorage.setItem('menyum_articles', JSON.stringify(articles));
+  }, [articles]);
+
+  useEffect(() => {
+    localStorage.setItem('menyum_reviews', JSON.stringify(reviews));
+  }, [reviews]);
+
+  useEffect(() => {
+    localStorage.setItem('menyum_orders', JSON.stringify(orders));
+  }, [orders]);
+
+  useEffect(() => {
+    localStorage.setItem('menyum_cart', JSON.stringify(cart));
+  }, [cart]);
+
+  // Cart Handlers
+  const handleAddToCart = (product, selectedToppings = []) => {
+    const toppingsPrice = (selectedToppings || []).reduce((acc, t) => acc + t.price, 0);
+    const itemPrice = (product.price || 0) + toppingsPrice;
+    const toppingKey = (selectedToppings || []).map((t) => t.id).sort().join('_');
+    const cartItemId = toppingKey ? `${product.id}-${toppingKey}` : `${product.id}`;
+
+    setCart((prev) => {
+      const existing = prev.find((item) => String(item.id) === String(cartItemId));
+      if (existing) {
+        return prev.map((item) =>
+          String(item.id) === String(cartItemId) ? { ...item, qty: item.qty + 1 } : item
+        );
+      }
+      return [
+        ...prev,
+        {
+          id: cartItemId,
+          productId: product.id,
+          name: product.name,
+          basePrice: product.price,
+          price: itemPrice,
+          toppings: selectedToppings || [],
+          qty: 1,
+        },
+      ];
+    });
+  };
+
+  const handleUpdateCartQty = (cartItemId, delta) => {
+    setCart((prev) =>
+      prev
+        .map((item) => {
+          if (String(item.id) === String(cartItemId)) {
+            const nextQty = item.qty + delta;
+            return nextQty > 0 ? { ...item, qty: nextQty } : null;
+          }
+          return item;
+        })
+        .filter(Boolean)
+    );
+  };
+
+  const handleRemoveCartItem = (cartItemId) => {
+    setCart((prev) => prev.filter((item) => String(item.id) !== String(cartItemId)));
+  };
+
+  const handleClearCart = () => {
+    setCart([]);
+  };
+
+  const handleConfirmOrder = (newOrder) => {
+    setOrders((prev) => [newOrder, ...prev]);
+  };
+
+  // Review Handlers
+  const handleAddReview = (newReview) => {
+    setReviews((prev) => [newReview, ...prev]);
+  };
+
+  // Product CRUD
+  const handleAddProduct = (newProd) => {
+    setProducts((prev) => [newProd, ...prev]);
+  };
+
+  const handleUpdateProduct = (updatedProd) => {
+    setProducts((prev) =>
+      prev.map((p) => (p.id === updatedProd.id ? updatedProd : p))
+    );
+  };
+
+  const handleDeleteProduct = (productId) => {
+    setProducts((prev) => prev.filter((p) => p.id !== productId));
+  };
+
+  // Article CRUD
+  const handleAddArticle = (newArt) => {
+    setArticles((prev) => [newArt, ...prev]);
+  };
+
+  const handleDeleteArticle = (articleId) => {
+    setArticles((prev) => prev.filter((a) => a.id !== articleId));
+  };
+
+  const cartTotalItems = cart.reduce((acc, item) => acc + item.qty, 0);
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="min-h-screen flex flex-col bg-white text-[#3a1409]">
+      {/* 1. Global Navbar */}
+      <Navbar
+        activePage={activePage}
+        setActivePage={setActivePage}
+        cartCount={cartTotalItems}
+      />
 
-      <div className="ticks"></div>
+      {/* 2. Main Page Content */}
+      <main className="flex-1">
+        {activePage === 'home' && (
+          <Home
+            onNavigate={setActivePage}
+            articles={articles}
+            onSelectArticle={(art) => {
+              setSelectedArticle(art);
+              setActivePage('artikel');
+            }}
+          />
+        )}
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+        {activePage === 'profil' && <Profil onNavigate={setActivePage} />}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+        {activePage === 'menu' && (
+          <Menu
+            products={products}
+            cart={cart}
+            onAddToCart={handleAddToCart}
+            onUpdateCartQty={handleUpdateCartQty}
+            onRemoveCartItem={handleRemoveCartItem}
+            onClearCart={handleClearCart}
+            onConfirmOrder={handleConfirmOrder}
+          />
+        )}
+
+        {activePage === 'testimoni' && (
+          <Testimoni reviews={reviews} onAddReview={handleAddReview} />
+        )}
+
+        {activePage === 'artikel' && (
+          <Artikel
+            articles={articles}
+            selectedArticle={selectedArticle}
+            onSelectArticle={setSelectedArticle}
+            onCloseArticleModal={() => setSelectedArticle(null)}
+          />
+        )}
+
+        {activePage === 'cms' && (
+          <AdminCms
+            products={products}
+            onAddProduct={handleAddProduct}
+            onUpdateProduct={handleUpdateProduct}
+            onDeleteProduct={handleDeleteProduct}
+            articles={articles}
+            onAddArticle={handleAddArticle}
+            onDeleteArticle={handleDeleteArticle}
+            orders={orders}
+          />
+        )}
+      </main>
+
+      {/* 3. Global Footer */}
+      <Footer onNavigate={setActivePage} />
+    </div>
+  );
 }
-
-export default App
