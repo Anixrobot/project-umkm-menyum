@@ -51,7 +51,7 @@ export default function Testimoni({ reviews = [], onAddReview }) {
           {reviews.map((rev) => (
             <div
               key={rev.id}
-              className="bg-[#fff8f2] border-l-[5px] border-[#f7b32b] rounded-tr-[18px] rounded-br-[18px] border-y border-r border-[#f1e4da]/60 p-[22px] flex flex-col justify-between min-h-[145px] shadow-xs hover:shadow-md transition-shadow relative"
+              className="bg-[#fff8f2] border-l-[5px] border-l-[#f7b32b] rounded-tr-[18px] rounded-br-[18px] border-y border-r border-[#f1e4da]/60 p-[22px] flex flex-col justify-between min-h-[145px] shadow-xs hover:shadow-md transition-shadow relative"
             >
               <div className="space-y-2">
                 {/* Star rating */}

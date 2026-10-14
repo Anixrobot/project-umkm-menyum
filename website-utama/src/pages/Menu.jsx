@@ -208,7 +208,7 @@ export default function Menu({
                 </div>
 
                 {/* Konten Bawah */}
-                <div className="p-4 flex flex-col flex-grow justify-between text-left">
+                <div className="p-4 flex flex-col grow justify-between text-left">
                   <div className="space-y-1">
                     <h3 className="font-bold text-[#3a1409] text-base leading-snug group-hover:text-[#e46000] transition-colors">
                       {prod.name}

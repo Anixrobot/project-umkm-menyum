@@ -14,7 +14,7 @@ export default function Home({ onNavigate, articles = [], onSelectArticle }) {
       {/* 1. Hero Section */}
       <section className="py-6 md:py-12">
         <div className="max-w-[1040px] mx-auto px-5">
-          <div className="bg-gradient-to-br from-[#fff8f2] via-white to-[#fff2e5] border-2 border-[#f1e4da] rounded-[24px] p-6 md:p-12 shadow-xs">
+          <div className="bg-linear-to-br from-[#fff8f2] via-white to-[#fff2e5] border-2 border-[#f1e4da] rounded-3xl p-6 md:p-12 shadow-xs">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
               {/* Kolom Kiri: Teks & CTA */}
               <div className="md:col-span-7 space-y-4 text-left">

@@ -42,13 +42,13 @@ export default function App() {
           fetchCashFlowFromSupabase(),
         ]);
 
-        if (dbProducts && dbProducts.length > 0) {
+        if (Array.isArray(dbProducts)) {
           setProducts(dbProducts);
         }
-        if (dbOrders && dbOrders.length > 0) {
+        if (Array.isArray(dbOrders)) {
           setOrders(dbOrders);
         }
-        if (dbCashFlow && dbCashFlow.length > 0) {
+        if (Array.isArray(dbCashFlow)) {
           setCashFlow(dbCashFlow);
         }
 
@@ -61,18 +61,38 @@ export default function App() {
 
     loadInitialData();
 
-    // 2. Real-time Subscription untuk Pesanan Masuk (Live Sync dengan Website Utama)
+    // 2. Real-time Subscription untuk Pesanan Masuk (Delay 2 detik sesuai permintaan)
     const ordersChannel = supabase
       .channel('realtime:orders')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'orders' },
+        () => {
+          // Delay 2 detik sebelum sinkronisasi pesanan masuk
+          setTimeout(async () => {
+            try {
+              const updatedOrders = await fetchOrdersFromSupabase();
+              setOrders(updatedOrders);
+            } catch (e) {
+              console.error('Error refreshing realtime orders:', e);
+            }
+          }, 2000);
+        }
+      )
+      .subscribe();
+
+    // 3. Real-time Subscription untuk Sinkronisasi Produk
+    const productsChannel = supabase
+      .channel('realtime:products')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'products' },
         async () => {
           try {
-            const updatedOrders = await fetchOrdersFromSupabase();
-            setOrders(updatedOrders);
+            const updatedProducts = await fetchProductsFromSupabase();
+            setProducts(updatedProducts);
           } catch (e) {
-            console.error('Error refreshing realtime orders:', e);
+            console.error('Error refreshing realtime products:', e);
           }
         }
       )
@@ -80,6 +100,7 @@ export default function App() {
 
     return () => {
       supabase.removeChannel(ordersChannel);
+      supabase.removeChannel(productsChannel);
     };
   }, []);
 

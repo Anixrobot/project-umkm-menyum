@@ -93,7 +93,7 @@ export default function ToppingModal({
               >
                 <div className="flex items-center gap-3.5">
                   <div
-                    className={`w-5 h-5 rounded-[6px] border-2 flex items-center justify-center transition-all ${
+                    className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
                       isSelected
                         ? 'bg-[#e46000] border-[#e46000] text-white shadow-xs'
                         : 'border-[#d6c4b8] bg-[#fff8f2] group-hover:border-[#e46000]'

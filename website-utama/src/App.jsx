@@ -7,46 +7,35 @@ import Menu from './pages/Menu';
 import Testimoni from './pages/Testimoni';
 import Artikel from './pages/Artikel';
 import AdminCms from './pages/AdminCms';
+import { supabase } from './lib/supabaseClient';
+import {
+  fetchProductsFromSupabase,
+  submitOrderToSupabase,
+  fetchArticlesFromSupabase,
+  createArticleInSupabase,
+  deleteArticleFromSupabase,
+  fetchReviewsFromSupabase,
+  submitReviewToSupabase,
+  deleteReviewFromSupabase,
+  fetchSiteSettingsFromSupabase,
+  updateSiteSettingsInSupabase,
+} from './services/supabaseService';
 import { initialProducts, initialReviews, initialArticles } from './data/initialData';
 
 export default function App() {
   const [activePage, setActivePage] = useState('home');
 
-  // State with LocalStorage Persistence
-  const [products, setProducts] = useState(() => {
-    try {
-      const saved = localStorage.getItem('menyum_products');
-      return saved ? JSON.parse(saved) : initialProducts;
-    } catch {
-      return initialProducts;
-    }
-  });
-
-  const [articles, setArticles] = useState(() => {
-    try {
-      const saved = localStorage.getItem('menyum_articles');
-      return saved ? JSON.parse(saved) : initialArticles;
-    } catch {
-      return initialArticles;
-    }
-  });
-
-  const [reviews, setReviews] = useState(() => {
-    try {
-      const saved = localStorage.getItem('menyum_reviews');
-      return saved ? JSON.parse(saved) : initialReviews;
-    } catch {
-      return initialReviews;
-    }
-  });
-
-  const [orders, setOrders] = useState(() => {
-    try {
-      const saved = localStorage.getItem('menyum_orders');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
+  // Products from Supabase (source of truth is Dashboard Kasir)
+  const [products, setProducts] = useState(initialProducts);
+  const [articles, setArticles] = useState(initialArticles);
+  const [reviews, setReviews] = useState(initialReviews);
+  const [siteSettings, setSiteSettings] = useState({
+    whatsapp_number: '6281234567890',
+    instagram_url: 'https://instagram.com/menyum.id',
+    tiktok_url: 'https://tiktok.com/@menyum.id',
+    address:
+      'Jl. Raya Jatiwaringin No.2, RT.8/RW.13, Cipinang Melayu, Kec. Makasar, Kota Jakarta Timur, Daerah Khusus Ibukota Jakarta 13620',
+    opening_hours: '09.00 - 17.00 WIB',
   });
 
   const [cart, setCart] = useState(() => {
@@ -60,30 +49,69 @@ export default function App() {
 
   const [selectedArticle, setSelectedArticle] = useState(null);
 
-  // Sync state to LocalStorage
+  // 1. Fetch Data dari Supabase saat web pertama kali dibuka
   useEffect(() => {
-    localStorage.setItem('menyum_products', JSON.stringify(products));
-  }, [products]);
+    async function loadData() {
+      try {
+        const [dbProds, dbArts, dbRevs, dbSettings] = await Promise.allSettled([
+          fetchProductsFromSupabase(),
+          fetchArticlesFromSupabase(),
+          fetchReviewsFromSupabase(),
+          fetchSiteSettingsFromSupabase(),
+        ]);
 
-  useEffect(() => {
-    localStorage.setItem('menyum_articles', JSON.stringify(articles));
-  }, [articles]);
+        if (dbProds.status === 'fulfilled' && Array.isArray(dbProds.value) && dbProds.value.length > 0) {
+          setProducts(dbProds.value);
+        }
+        if (dbArts.status === 'fulfilled' && Array.isArray(dbArts.value) && dbArts.value.length > 0) {
+          setArticles(dbArts.value);
+        }
+        if (dbRevs.status === 'fulfilled' && Array.isArray(dbRevs.value) && dbRevs.value.length > 0) {
+          setReviews(dbRevs.value);
+        }
+        if (dbSettings.status === 'fulfilled' && dbSettings.value) {
+          setSiteSettings(dbSettings.value);
+        }
+      } catch (err) {
+        console.warn('Gagal memuat data dari Supabase, menggunakan data default lokal.', err);
+      }
+    }
 
-  useEffect(() => {
-    localStorage.setItem('menyum_reviews', JSON.stringify(reviews));
-  }, [reviews]);
+    loadData();
 
-  useEffect(() => {
-    localStorage.setItem('menyum_orders', JSON.stringify(orders));
-  }, [orders]);
+    // 2. Real-time Subscription untuk Tabel Produk
+    // Ketika Admin di Dashboard Kasir menambah/mengedit/menghapus produk, menu website langsung terupdate!
+    const productsChannel = supabase
+      .channel('realtime:web-products')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'products' },
+        async () => {
+          try {
+            const updated = await fetchProductsFromSupabase();
+            if (Array.isArray(updated)) {
+              setProducts(updated);
+            }
+          } catch (e) {
+            console.error('Error refreshing realtime products on web:', e);
+          }
+        }
+      )
+      .subscribe();
 
+    return () => {
+      supabase.removeChannel(productsChannel);
+    };
+  }, []);
+
+  // Sync Cart to LocalStorage
   useEffect(() => {
     localStorage.setItem('menyum_cart', JSON.stringify(cart));
   }, [cart]);
 
   // Cart Handlers
   const handleAddToCart = (product, selectedToppings = []) => {
-    const toppingsPrice = (selectedToppings || []).reduce((acc, t) => acc + t.price, 0);
+    const toppingsPrice = (selectedToppings || []).reduce((acc, t) => acc + (t.price || 0), 0);
     const itemPrice = (product.price || 0) + toppingsPrice;
     const toppingKey = (selectedToppings || []).map((t) => t.id).sort().join('_');
     const cartItemId = toppingKey ? `${product.id}-${toppingKey}` : `${product.id}`;
@@ -132,37 +160,70 @@ export default function App() {
     setCart([]);
   };
 
-  const handleConfirmOrder = (newOrder) => {
-    setOrders((prev) => [newOrder, ...prev]);
+  // Order Confirmation: Mengirim Pesanan Langsung ke Supabase (Terhubung Realtime ke Kasir)
+  const handleConfirmOrder = async (newOrder) => {
+    try {
+      await submitOrderToSupabase(newOrder);
+    } catch (e) {
+      console.warn('Gagal sinkronisasi pesanan ke Supabase, fallback lokal:', e);
+    }
   };
 
   // Review Handlers
-  const handleAddReview = (newReview) => {
+  const handleAddReview = async (newReview) => {
     setReviews((prev) => [newReview, ...prev]);
+    try {
+      await submitReviewToSupabase(newReview);
+    } catch (e) {
+      console.warn('Gagal simpan ulasan ke Supabase:', e);
+    }
   };
 
-  // Product CRUD
-  const handleAddProduct = (newProd) => {
-    setProducts((prev) => [newProd, ...prev]);
+  const handleDeleteReview = async (reviewId) => {
+    setReviews((prev) => prev.filter((r) => r.id !== reviewId));
+    try {
+      await deleteReviewFromSupabase(reviewId);
+    } catch (e) {
+      console.warn('Gagal hapus ulasan di Supabase:', e);
+    }
   };
 
-  const handleUpdateProduct = (updatedProd) => {
-    setProducts((prev) =>
-      prev.map((p) => (p.id === updatedProd.id ? updatedProd : p))
-    );
+  // Article Handlers
+  const handleAddArticle = async (newArt) => {
+    try {
+      const saved = await createArticleInSupabase(newArt);
+      setArticles((prev) => [saved, ...prev]);
+    } catch (e) {
+      console.warn('Gagal simpan artikel ke Supabase:', e);
+      setArticles((prev) => [{ ...newArt, id: Date.now() }, ...prev]);
+    }
   };
 
-  const handleDeleteProduct = (productId) => {
-    setProducts((prev) => prev.filter((p) => p.id !== productId));
-  };
-
-  // Article CRUD
-  const handleAddArticle = (newArt) => {
-    setArticles((prev) => [newArt, ...prev]);
-  };
-
-  const handleDeleteArticle = (articleId) => {
+  const handleDeleteArticle = async (articleId) => {
     setArticles((prev) => prev.filter((a) => a.id !== articleId));
+    try {
+      await deleteArticleFromSupabase(articleId);
+    } catch (e) {
+      console.warn('Gagal hapus artikel di Supabase:', e);
+    }
+  };
+
+  // Site Settings Handler
+  const handleUpdateSiteSettings = async (newSettings) => {
+    try {
+      const saved = await updateSiteSettingsInSupabase(newSettings);
+      setSiteSettings(saved);
+    } catch (e) {
+      console.warn('Gagal update site settings di Supabase:', e);
+      setSiteSettings((prev) => ({
+        ...prev,
+        whatsapp_number: newSettings.whatsappNumber,
+        instagram_url: newSettings.instagramUrl,
+        tiktok_url: newSettings.tiktokUrl,
+        address: newSettings.address,
+        opening_hours: newSettings.openingHours,
+      }));
+    }
   };
 
   const cartTotalItems = cart.reduce((acc, item) => acc + item.qty, 0);
@@ -218,20 +279,19 @@ export default function App() {
 
         {activePage === 'cms' && (
           <AdminCms
-            products={products}
-            onAddProduct={handleAddProduct}
-            onUpdateProduct={handleUpdateProduct}
-            onDeleteProduct={handleDeleteProduct}
             articles={articles}
             onAddArticle={handleAddArticle}
             onDeleteArticle={handleDeleteArticle}
-            orders={orders}
+            reviews={reviews}
+            onDeleteReview={handleDeleteReview}
+            siteSettings={siteSettings}
+            onUpdateSiteSettings={handleUpdateSiteSettings}
           />
         )}
       </main>
 
       {/* 3. Global Footer */}
-      <Footer onNavigate={setActivePage} />
+      <Footer onNavigate={setActivePage} siteSettings={siteSettings} />
     </div>
   );
 }

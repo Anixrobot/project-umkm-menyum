@@ -1,8 +1,14 @@
 import { MessageCircle, ExternalLink, MapPin, Clock } from 'lucide-react';
 
-export default function Footer({ onNavigate }) {
-  const whatsappNumber = '6281234567890';
-  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=Halo%20MenYum,%20saya%20mau%20pesan%20nasi%20mentai!`;
+export default function Footer({ onNavigate, siteSettings = {} }) {
+  const whatsappNumber = siteSettings.whatsapp_number || '6281234567890';
+  const whatsappUrl = `https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=Halo%20MenYum,%20saya%20mau%20pesan%20nasi%20mentai!`;
+  const instagramUrl = siteSettings.instagram_url || 'https://instagram.com/menyum.id';
+  const tiktokUrl = siteSettings.tiktok_url || 'https://tiktok.com/@menyum.id';
+  const address =
+    siteSettings.address ||
+    'Jl. Raya Jatiwaringin No.2, RT.8/RW.13, Cipinang Melayu, Kec. Makasar, Kota Jakarta Timur, Daerah Khusus Ibukota Jakarta 13620';
+  const openingHours = siteSettings.opening_hours || '09.00 - 17.00 WIB';
 
   return (
     <>
@@ -72,13 +78,13 @@ export default function Footer({ onNavigate }) {
             <div className="flex items-start gap-2.5 text-[15px] text-[#fff3ea]/90">
               <MapPin size={18} className="shrink-0 text-[#f7b32b] mt-0.5" />
               <p className="leading-relaxed">
-                Jl. Raya Jatiwaringin No.2, RT.8/RW.13, Cipinang Melayu, Kec. Makasar, Kota Jakarta Timur, Daerah Khusus Ibukota Jakarta 13620
+                {address}
               </p>
             </div>
 
             <div className="flex items-center gap-2.5 text-[15px] text-[#fff3ea]/90 pt-1">
               <Clock size={18} className="shrink-0 text-[#f7b32b]" />
-              <p className="font-semibold text-white">Jam Buka : 09.00 - 17.00 WIB</p>
+              <p className="font-semibold text-white">Jam Buka : {openingHours}</p>
             </div>
           </div>
 
@@ -91,7 +97,7 @@ export default function Footer({ onNavigate }) {
 
             <div className="flex flex-wrap gap-4 text-[15px] pt-1">
               <a
-                href="https://instagram.com"
+                href={instagramUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center gap-1.5 text-[#fff3ea] hover:text-[#f7b32b] transition font-medium"
@@ -114,7 +120,7 @@ export default function Footer({ onNavigate }) {
               </a>
 
               <a
-                href="https://tiktok.com"
+                href={tiktokUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center gap-1.5 text-[#fff3ea] hover:text-[#f7b32b] transition font-medium"
