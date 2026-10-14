@@ -171,75 +171,91 @@ export default function Menu({
         </div>
 
         {/* Katalog Grid Produk */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
-          {filteredProducts.map((prod) => {
-            const inCartItems = cart.filter(
-              (item) => String(item.productId || item.id) === String(prod.id)
-            );
-            const qty = inCartItems.reduce((acc, item) => acc + item.qty, 0);
+        {filteredProducts.length === 0 ? (
+          <div className="py-16 text-center rounded-2xl bg-[#fff8f2] border-2 border-dashed border-[#f1e4da] p-8 space-y-3">
+            <div className="w-14 h-14 rounded-full bg-white border border-[#f1e4da] flex items-center justify-center mx-auto text-[#7a5a4c] shadow-xs">
+              <ShoppingBag size={26} className="text-[#e46000]" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-extrabold text-xl text-[#3a1409]">
+                Menu Belum Tersedia
+              </h3>
+              <p className="text-sm text-[#7a5a4c] max-w-md mx-auto leading-relaxed">
+                Database produk saat ini sedang kosong atau belum aktif. Tambahkan produk baru melalui <strong>Dashboard Kasir POS</strong> untuk menampilkannya di sini secara otomatis.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
+            {filteredProducts.map((prod) => {
+              const inCartItems = cart.filter(
+                (item) => String(item.productId || item.id) === String(prod.id)
+              );
+              const qty = inCartItems.reduce((acc, item) => acc + item.qty, 0);
 
-            return (
-              <div
-                key={prod.id}
-                onClick={() => handleProductClick(prod)}
-                className="rounded-[18px] bg-white border-2 border-[#f1e4da] overflow-hidden flex flex-col justify-between shadow-xs hover:border-[#f7b32b] hover:shadow-md transition-all group cursor-pointer"
-              >
-                {/* Gambar Produk */}
-                <div className="h-[140px] bg-[#fff8f2] relative flex items-center justify-center overflow-hidden">
-                  <img
-                    src={prod.image}
-                    alt={prod.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    loading="lazy"
-                  />
+              return (
+                <div
+                  key={prod.id}
+                  onClick={() => handleProductClick(prod)}
+                  className="rounded-[18px] bg-white border-2 border-[#f1e4da] overflow-hidden flex flex-col justify-between shadow-xs hover:border-[#f7b32b] hover:shadow-md transition-all group cursor-pointer"
+                >
+                  {/* Gambar Produk */}
+                  <div className="h-[140px] bg-[#fff8f2] relative flex items-center justify-center overflow-hidden">
+                    <img
+                      src={prod.image}
+                      alt={prod.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                    />
 
-                  {/* Badge Terlaris */}
-                  {prod.isBestseller && (
-                    <span className="bg-[#f7b32b] text-[11px] font-bold text-[#3a1409] px-2.5 py-0.5 rounded-full absolute left-2.5 top-2.5 shadow-xs flex items-center gap-1">
-                      <Sparkles size={11} /> Terlaris
-                    </span>
-                  )}
+                    {/* Badge Terlaris */}
+                    {prod.isBestseller && (
+                      <span className="bg-[#f7b32b] text-[11px] font-bold text-[#3a1409] px-2.5 py-0.5 rounded-full absolute left-2.5 top-2.5 shadow-xs flex items-center gap-1">
+                        <Sparkles size={11} /> Terlaris
+                      </span>
+                    )}
 
-                  {qty > 0 && (
-                    <span className="bg-[#e46000] text-white text-xs font-bold px-2 py-0.5 rounded-full absolute right-2.5 top-2.5 shadow-md">
-                      {qty} di keranjang
-                    </span>
-                  )}
-                </div>
-
-                {/* Konten Bawah */}
-                <div className="p-4 flex flex-col grow justify-between text-left">
-                  <div className="space-y-1">
-                    <h3 className="font-bold text-[#3a1409] text-base leading-snug group-hover:text-[#e46000] transition-colors">
-                      {prod.name}
-                    </h3>
-                    <p className="text-xs text-[#7a5a4c] line-clamp-2 leading-relaxed">
-                      {prod.description}
-                    </p>
+                    {qty > 0 && (
+                      <span className="bg-[#e46000] text-white text-xs font-bold px-2 py-0.5 rounded-full absolute right-2.5 top-2.5 shadow-md">
+                        {qty} di keranjang
+                      </span>
+                    )}
                   </div>
 
-                  <div className="pt-3">
-                    <div className="text-lg font-black text-[#e46000]">
-                      {formatRupiah(prod.price)}
+                  {/* Konten Bawah */}
+                  <div className="p-4 flex flex-col grow justify-between text-left">
+                    <div className="space-y-1">
+                      <h3 className="font-bold text-[#3a1409] text-base leading-snug group-hover:text-[#e46000] transition-colors">
+                        {prod.name}
+                      </h3>
+                      <p className="text-xs text-[#7a5a4c] line-clamp-2 leading-relaxed">
+                        {prod.description}
+                      </p>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleProductClick(prod);
-                      }}
-                      className="w-full p-[9px] rounded-full bg-[#e46000] hover:bg-[#c85300] text-white text-sm font-bold shadow-xs hover:shadow transition-all active:scale-95 flex items-center justify-center gap-1.5 mt-2 cursor-pointer"
-                    >
-                      <Plus size={16} />
-                      <span>Tambah</span>
-                    </button>
+                    <div className="pt-3">
+                      <div className="text-lg font-black text-[#e46000]">
+                        {formatRupiah(prod.price)}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleProductClick(prod);
+                        }}
+                        className="w-full p-[9px] rounded-full bg-[#e46000] hover:bg-[#c85300] text-white text-sm font-bold shadow-xs hover:shadow transition-all active:scale-95 flex items-center justify-center gap-1.5 mt-2 cursor-pointer"
+                      >
+                        <Plus size={16} />
+                        <span>Tambah</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Panel Keranjang & Checkout QRIS */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">

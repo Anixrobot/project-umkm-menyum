@@ -60,13 +60,13 @@ export default function App() {
           fetchSiteSettingsFromSupabase(),
         ]);
 
-        if (dbProds.status === 'fulfilled' && Array.isArray(dbProds.value) && dbProds.value.length > 0) {
+        if (dbProds.status === 'fulfilled' && Array.isArray(dbProds.value)) {
           setProducts(dbProds.value);
         }
-        if (dbArts.status === 'fulfilled' && Array.isArray(dbArts.value) && dbArts.value.length > 0) {
+        if (dbArts.status === 'fulfilled' && Array.isArray(dbArts.value)) {
           setArticles(dbArts.value);
         }
-        if (dbRevs.status === 'fulfilled' && Array.isArray(dbRevs.value) && dbRevs.value.length > 0) {
+        if (dbRevs.status === 'fulfilled' && Array.isArray(dbRevs.value)) {
           setReviews(dbRevs.value);
         }
         if (dbSettings.status === 'fulfilled' && dbSettings.value) {
@@ -79,8 +79,8 @@ export default function App() {
 
     loadData();
 
-    // 2. Real-time Subscription untuk Tabel Produk
-    // Ketika Admin di Dashboard Kasir menambah/mengedit/menghapus produk, menu website langsung terupdate!
+    // 2. Real-time Subscriptions (Produk, Artikel, Review, Pengaturan)
+    // Sinkronisasi instan saat ada perubahan dari Dashboard Kasir / CMS
     const productsChannel = supabase
       .channel('realtime:web-products')
       .on(
@@ -99,8 +99,59 @@ export default function App() {
       )
       .subscribe();
 
+    const articlesChannel = supabase
+      .channel('realtime:web-articles')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'articles' },
+        async () => {
+          try {
+            const updated = await fetchArticlesFromSupabase();
+            if (Array.isArray(updated)) setArticles(updated);
+          } catch (e) {
+            console.error('Error refreshing realtime articles on web:', e);
+          }
+        }
+      )
+      .subscribe();
+
+    const reviewsChannel = supabase
+      .channel('realtime:web-reviews')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'reviews' },
+        async () => {
+          try {
+            const updated = await fetchReviewsFromSupabase();
+            if (Array.isArray(updated)) setReviews(updated);
+          } catch (e) {
+            console.error('Error refreshing realtime reviews on web:', e);
+          }
+        }
+      )
+      .subscribe();
+
+    const settingsChannel = supabase
+      .channel('realtime:web-settings')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'site_settings' },
+        async () => {
+          try {
+            const updated = await fetchSiteSettingsFromSupabase();
+            if (updated) setSiteSettings(updated);
+          } catch (e) {
+            console.error('Error refreshing realtime settings on web:', e);
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(productsChannel);
+      supabase.removeChannel(articlesChannel);
+      supabase.removeChannel(reviewsChannel);
+      supabase.removeChannel(settingsChannel);
     };
   }, []);
 

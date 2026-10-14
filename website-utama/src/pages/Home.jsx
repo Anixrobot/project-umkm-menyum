@@ -187,8 +187,13 @@ export default function Home({ onNavigate, articles = [], onSelectArticle }) {
           </div>
 
           {/* Grid 3 Kartu Artikel */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {previewArticles.map((art) => (
+          {previewArticles.length === 0 ? (
+            <div className="py-10 text-center rounded-2xl bg-[#fff8f2] border-2 border-dashed border-[#f1e4da] p-6 text-sm text-[#7a5a4c]">
+              Belum ada artikel yang dipublikasikan. Tambahkan artikel baru melalui menu <strong>Panel Web</strong>.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {previewArticles.map((art) => (
               <div
                 key={art.id}
                 onClick={() => {
@@ -231,7 +236,8 @@ export default function Home({ onNavigate, articles = [], onSelectArticle }) {
               </div>
             ))}
           </div>
-        </div>
+        )}
+      </div>
       </section>
 
       {/* Video Modal Promo */}

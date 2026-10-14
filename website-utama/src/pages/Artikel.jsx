@@ -47,53 +47,60 @@ export default function Artikel({ articles = [], selectedArticle, onSelectArticl
         </div>
 
         {/* Grid 3 Kolom Kartu Artikel */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {filteredArticles.map((art) => (
-            <div
-              key={art.id}
-              onClick={() => onSelectArticle(art)}
-              className="p-[9px] rounded-[13px] border border-[#f1e4da] bg-white shadow-[0_0_15.3px_rgba(0,0,0,0.10)] hover:-translate-y-1.5 hover:shadow-[0_8px_25px_rgba(0,0,0,0.13)] transition-all cursor-pointer flex flex-col justify-between group"
-            >
-              {/* Gambar / Ikon Artikel */}
-              <div className="h-44 rounded-[18px] bg-[#fff8f2] flex items-center justify-center text-[64px] overflow-hidden relative">
-                {art.image ? (
-                  <img
-                    src={art.image}
-                    alt={art.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    loading="lazy"
-                  />
-                ) : (
-                  <span>{art.icon || '🍱'}</span>
-                )}
-                <span className="absolute top-2.5 right-2.5 bg-white/95 backdrop-blur-xs text-[#3a1409] text-[11px] font-bold px-2.5 py-0.5 rounded-md border border-[#f1e4da]">
-                  {art.category}
-                </span>
-              </div>
+        {filteredArticles.length === 0 ? (
+          <div className="py-14 text-center rounded-2xl bg-[#fff8f2] border-2 border-dashed border-[#f1e4da] p-8 text-[#7a5a4c] space-y-1">
+            <p className="font-bold text-[#3a1409] text-base">Belum ada artikel yang tersedia</p>
+            <p className="text-sm">Silakan pilih kategori lain atau tambahkan artikel baru melalui menu <strong>Panel Web</strong>.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {filteredArticles.map((art) => (
+              <div
+                key={art.id}
+                onClick={() => onSelectArticle(art)}
+                className="p-[9px] rounded-[13px] border border-[#f1e4da] bg-white shadow-[0_0_15.3px_rgba(0,0,0,0.10)] hover:-translate-y-1.5 hover:shadow-[0_8px_25px_rgba(0,0,0,0.13)] transition-all cursor-pointer flex flex-col justify-between group"
+              >
+                {/* Gambar / Ikon Artikel */}
+                <div className="h-44 rounded-[18px] bg-[#fff8f2] flex items-center justify-center text-[64px] overflow-hidden relative">
+                  {art.image ? (
+                    <img
+                      src={art.image}
+                      alt={art.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <span>{art.icon || '🍱'}</span>
+                  )}
+                  <span className="absolute top-2.5 right-2.5 bg-white/95 backdrop-blur-xs text-[#3a1409] text-[11px] font-bold px-2.5 py-0.5 rounded-md border border-[#f1e4da]">
+                    {art.category}
+                  </span>
+                </div>
 
-              {/* Konten Artikel */}
-              <div className="p-2 space-y-2 flex-1 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center gap-1.5 text-[11px] text-[#7a5a4c] pt-1">
-                    <Clock size={12} />
-                    <span>{art.readTime || '3 menit baca'}</span>
+                {/* Konten Artikel */}
+                <div className="p-2 space-y-2 flex-1 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-1.5 text-[11px] text-[#7a5a4c] pt-1">
+                      <Clock size={12} />
+                      <span>{art.readTime || '3 menit baca'}</span>
+                    </div>
+                    <h3 className="text-[20px] md:text-[21px] font-bold text-[#3a1409] group-hover:text-[#e46000] transition-colors leading-snug pt-1">
+                      {art.title}
+                    </h3>
+                    <p className="text-[14px] text-[#7a5a4c] line-clamp-2 mt-1 leading-relaxed">
+                      {art.caption}
+                    </p>
                   </div>
-                  <h3 className="text-[20px] md:text-[21px] font-bold text-[#3a1409] group-hover:text-[#e46000] transition-colors leading-snug pt-1">
-                    {art.title}
-                  </h3>
-                  <p className="text-[14px] text-[#7a5a4c] line-clamp-2 mt-1 leading-relaxed">
-                    {art.caption}
-                  </p>
-                </div>
 
-                <div className="pt-2 text-xs font-bold text-[#e46000] flex items-center gap-1">
-                  <span>Baca selengkapnya</span>
-                  <ArrowRight size={14} />
+                  <div className="pt-2 text-xs font-bold text-[#e46000] flex items-center gap-1">
+                    <span>Baca selengkapnya</span>
+                    <ArrowRight size={14} />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Modal Baca Artikel Lengkap */}

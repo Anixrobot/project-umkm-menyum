@@ -47,38 +47,45 @@ export default function Testimoni({ reviews = [], onAddReview }) {
         </div>
 
         {/* Grid 3 Kolom Ulasan */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
-          {reviews.map((rev) => (
-            <div
-              key={rev.id}
-              className="bg-[#fff8f2] border-l-[5px] border-l-[#f7b32b] rounded-tr-[18px] rounded-br-[18px] border-y border-r border-[#f1e4da]/60 p-[22px] flex flex-col justify-between min-h-[145px] shadow-xs hover:shadow-md transition-shadow relative"
-            >
-              <div className="space-y-2">
-                {/* Star rating */}
-                <div className="flex items-center gap-1 text-[#f7b32b]">
-                  {Array.from({ length: rev.rating || 5 }).map((_, i) => (
-                    <Star key={i} size={15} className="fill-[#f7b32b]" />
-                  ))}
+        {reviews.length === 0 ? (
+          <div className="py-12 text-center rounded-2xl bg-[#fff8f2] border-2 border-dashed border-[#f1e4da] p-8 text-[#7a5a4c] space-y-1">
+            <p className="font-bold text-[#3a1409] text-base">Belum ada ulasan pembeli</p>
+            <p className="text-sm">Jadilah yang pertama menulis ulasan melalui formulir di bawah!</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+            {reviews.map((rev) => (
+              <div
+                key={rev.id}
+                className="bg-[#fff8f2] border-l-[5px] border-l-[#f7b32b] rounded-tr-[18px] rounded-br-[18px] border-y border-r border-[#f1e4da]/60 p-[22px] flex flex-col justify-between min-h-[145px] shadow-xs hover:shadow-md transition-shadow relative"
+              >
+                <div className="space-y-2">
+                  {/* Star rating */}
+                  <div className="flex items-center gap-1 text-[#f7b32b]">
+                    {Array.from({ length: rev.rating || 5 }).map((_, i) => (
+                      <Star key={i} size={15} className="fill-[#f7b32b]" />
+                    ))}
+                  </div>
+
+                  {/* Review Text */}
+                  <p className="text-[#3a1409] text-[15px] font-medium leading-relaxed italic">
+                    "{rev.text}"
+                  </p>
                 </div>
 
-                {/* Review Text */}
-                <p className="text-[#3a1409] text-[15px] font-medium leading-relaxed italic">
-                  "{rev.text}"
-                </p>
+                {/* Author & Date */}
+                <div className="pt-3 border-t border-[#f1e4da]/60 flex items-center justify-between mt-3 text-xs">
+                  <span className="font-bold text-[#3a1409] capitalize">
+                    — {rev.name}
+                  </span>
+                  <span className="text-[#7a5a4c]/80 text-[11px] font-medium">
+                    {rev.date || 'Terbaru'}
+                  </span>
+                </div>
               </div>
-
-              {/* Author & Date */}
-              <div className="pt-3 border-t border-[#f1e4da]/60 flex items-center justify-between mt-3 text-xs">
-                <span className="font-bold text-[#3a1409] capitalize">
-                  — {rev.name}
-                </span>
-                <span className="text-[#7a5a4c]/80 text-[11px] font-medium">
-                  {rev.date || 'Terbaru'}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* Form "Tulis ulasanmu" */}
         <div className="max-w-[540px] pt-4">
