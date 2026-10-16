@@ -131,34 +131,54 @@ export async function fetchOrdersFromSupabase() {
     throw error;
   }
 
-  return data.map((order) => ({
-    id: order.order_code || order.id,
-    dbId: order.id,
-    customerName: order.customer_name,
-    source: order.source,
-    orderType: order.order_type,
-    paymentMethod: order.payment_method,
-    totalPrice: Number(order.total_price),
-    status: order.status,
-    notes: order.notes || '-',
-    createdAt: new Date(order.created_at).toLocaleTimeString('id-ID', {
-      hour: '2-digit',
-      minute: '2-digit',
-      day: 'numeric',
-      month: 'short',
-    }),
-    items: (order.order_items || []).map((item) => ({
-      id: item.id,
-      name: item.product_name,
-      qty: item.qty,
-      price: Number(item.price),
-    })),
-  }));
+  return data.map((order) => {
+    // Ekstrak queue_number dari kolom atau dari tag di notes [Antrian: A-xxx]
+    let queueNum = order.queue_number;
+    let cleanNotes = order.notes || '-';
+    if (!queueNum && cleanNotes.includes('[Antrian:')) {
+      const match = cleanNotes.match(/\[Antrian:\s*([^\]]+)\]/);
+      if (match) {
+        queueNum = match[1].trim();
+        cleanNotes = cleanNotes.replace(/\[Antrian:\s*[^\]]+\]\s*/, '').trim() || '-';
+      }
+    }
+
+    return {
+      id: order.order_code || order.id,
+      dbId: order.id,
+      queueNumber: queueNum || '-',
+      customerName: order.customer_name,
+      source: order.source,
+      orderType: order.order_type,
+      paymentMethod: order.payment_method || 'Belum Bayar',
+      totalPrice: Number(order.total_price),
+      status: order.status,
+      notes: cleanNotes,
+      createdAt: new Date(order.created_at).toLocaleTimeString('id-ID', {
+        hour: '2-digit',
+        minute: '2-digit',
+        day: 'numeric',
+        month: 'short',
+      }),
+      items: (order.order_items || []).map((item) => ({
+        id: item.id,
+        name: item.product_name,
+        qty: item.qty,
+        price: Number(item.price),
+        toppings: item.toppings || null,
+      })),
+    };
+  });
 }
 
-export async function updateOrderStatusInSupabase(orderIdOrCode, newStatus) {
+export async function updateOrderStatusInSupabase(orderIdOrCode, newStatus, paymentMethod = null) {
   // Update berdasarkan order_code atau id UUID
-  let query = supabase.from('orders').update({ status: newStatus });
+  const payload = { status: newStatus };
+  if (paymentMethod) {
+    payload.payment_method = paymentMethod;
+  }
+
+  let query = supabase.from('orders').update(payload);
   if (orderIdOrCode.includes('-') && orderIdOrCode.length > 20) {
     query = query.eq('id', orderIdOrCode);
   } else {
@@ -171,6 +191,66 @@ export async function updateOrderStatusInSupabase(orderIdOrCode, newStatus) {
     throw error;
   }
   return data;
+}
+
+export async function updateOrderItemsInSupabase(
+  orderIdOrCode,
+  updatedItems,
+  newTotalPrice,
+  newNotes,
+  orderDbId = null
+) {
+  let dbId = orderDbId;
+  if (!dbId) {
+    const { data: ord } = await supabase
+      .from('orders')
+      .select('id')
+      .or(`id.eq.${orderIdOrCode},order_code.eq.${orderIdOrCode}`)
+      .maybeSingle();
+    if (ord) dbId = ord.id;
+  }
+
+  // 1. Update header di tabel orders
+  const updatePayload = {
+    total_price: newTotalPrice,
+  };
+  if (newNotes !== undefined) {
+    updatePayload.notes = newNotes;
+  }
+
+  let query = supabase.from('orders').update(updatePayload);
+  if (dbId) {
+    query = query.eq('id', dbId);
+  } else {
+    query = query.eq('order_code', orderIdOrCode);
+  }
+  const { error: orderErr } = await query;
+  if (orderErr) {
+    console.error('Error updating order header in Supabase:', orderErr);
+    throw orderErr;
+  }
+
+  // 2. Update order_items jika dbId tersedia
+  if (dbId && Array.isArray(updatedItems)) {
+    // Hapus item sebelumnya
+    await supabase.from('order_items').delete().eq('order_id', dbId);
+
+    // Masukkan item yang telah diperbarui
+    if (updatedItems.length > 0) {
+      const itemsPayload = updatedItems.map((item) => ({
+        order_id: dbId,
+        product_name: item.name,
+        qty: item.qty,
+        price: item.price,
+        toppings: item.toppings || null,
+        subtotal: item.price * item.qty,
+      }));
+      const { error: insertErr } = await supabase.from('order_items').insert(itemsPayload);
+      if (insertErr) {
+        console.warn('Warning inserting updated items:', insertErr);
+      }
+    }
+  }
 }
 
 export async function deleteOrderFromSupabase(orderIdOrCode) {

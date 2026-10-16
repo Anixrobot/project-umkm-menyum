@@ -31,29 +31,112 @@ export async function fetchProductsFromSupabase() {
 }
 
 // ==========================================
-// 2. PESANAN ONLINE (KIRIM KE DASHBOARD KASIR)
+// 2. PESANAN ONLINE (NOMOR ANTRIAN & KIRIM KE KASIR)
 // ==========================================
 
-export async function submitOrderToSupabase(order) {
-  // 1. Simpan Header Pesanan ke tabel orders
-  const { data: orderData, error: orderError } = await supabase
-    .from('orders')
-    .insert([
-      {
-        order_code: order.id,
-        customer_name: order.customerName,
-        source: 'website',
-        order_type: 'Takeaway',
-        payment_method: order.paymentMethod || 'QRIS',
-        total_price: order.totalPrice,
-        status: 'Pending',
-        notes: order.notes || '-',
-      },
-    ])
-    .select()
-    .single();
+export async function getNextQueueNumber() {
+  try {
+    // Tentukan awal hari ini (jam 00:00:00 waktu lokal)
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).toISOString();
 
-  if (orderError) {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('queue_number, notes, created_at')
+      .gte('created_at', todayStart)
+      .order('created_at', { ascending: false });
+
+    if (!error && Array.isArray(data) && data.length > 0) {
+      // Cari angka antrian tertinggi hari ini
+      let maxNum = 0;
+      for (const row of data) {
+        if (row.queue_number) {
+          const match = String(row.queue_number).match(/A-(\d+)/i);
+          if (match) {
+            const num = parseInt(match[1], 10);
+            if (num > maxNum) maxNum = num;
+          }
+        }
+        if (row.notes) {
+          const matchNotes = String(row.notes).match(/\[Antrian:\s*A-(\d+)\]/i);
+          if (matchNotes) {
+            const num = parseInt(matchNotes[1], 10);
+            if (num > maxNum) maxNum = num;
+          }
+        }
+      }
+      const nextNum = maxNum + 1;
+      return `A-${String(nextNum).padStart(3, '0')}`;
+    }
+  } catch (err) {
+    console.warn('Gagal membaca nomor antrian dari Supabase, menggunakan fallback lokal:', err);
+  }
+
+  // Fallback lokal berdasarkan tanggal hari ini jika offline / error
+  try {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const stored = JSON.parse(localStorage.getItem('menyum_queue_tracker') || '{}');
+    let nextCount = 1;
+    if (stored.date === todayStr) {
+      nextCount = (Number(stored.count) || 0) + 1;
+    }
+    localStorage.setItem(
+      'menyum_queue_tracker',
+      JSON.stringify({ date: todayStr, count: nextCount })
+    );
+    return `A-${String(nextCount).padStart(3, '0')}`;
+  } catch {
+    return 'A-001';
+  }
+}
+
+export async function submitOrderToSupabase(order) {
+  // Format catatan dengan tag [Antrian: ...] sebagai cadangan jika kolom queue_number belum dieksekusi di Supabase
+  const notesWithQueue = order.queueNumber
+    ? `[Antrian: ${order.queueNumber}] ${order.notes || '-'}`
+    : (order.notes || '-');
+
+  const basePayload = {
+    order_code: order.id,
+    customer_name: order.customerName,
+    source: 'website',
+    order_type: 'Takeaway',
+    payment_method: order.paymentMethod || 'Belum Bayar (Kasir)',
+    total_price: order.totalPrice,
+    status: 'Pending',
+    notes: notesWithQueue,
+  };
+
+  let orderData;
+  let orderError;
+
+  // 1. Coba simpan dengan kolom queue_number
+  try {
+    const res = await supabase
+      .from('orders')
+      .insert([{ ...basePayload, queue_number: order.queueNumber }])
+      .select()
+      .single();
+    orderData = res.data;
+    orderError = res.error;
+  } catch (e) {
+    orderError = e;
+  }
+
+  // Jika kolom queue_number belum ada di Supabase, fallback simpan tanpa kolom tersebut (sudah ada tag di notes)
+  if (orderError && (orderError.code === '42703' || String(orderError.message).includes('queue_number'))) {
+    console.warn('Kolom queue_number belum dibuat di tabel orders, menyimpan dengan tag notes...');
+    const retry = await supabase
+      .from('orders')
+      .insert([basePayload])
+      .select()
+      .single();
+    if (retry.error) {
+      console.error('Error submitting order on retry:', retry.error);
+      throw retry.error;
+    }
+    orderData = retry.data;
+  } else if (orderError) {
     console.error('Error submitting order to Supabase:', orderError);
     throw orderError;
   }
@@ -81,7 +164,7 @@ export async function submitOrderToSupabase(order) {
     }
   }
 
-  return orderData;
+  return { ...orderData, queue_number: order.queueNumber };
 }
 
 // ==========================================

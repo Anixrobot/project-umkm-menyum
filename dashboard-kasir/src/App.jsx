@@ -12,6 +12,7 @@ import {
   deleteProductFromSupabase,
   fetchOrdersFromSupabase,
   updateOrderStatusInSupabase,
+  updateOrderItemsInSupabase,
   deleteOrderFromSupabase,
   processPosTransactionInSupabase,
   fetchCashFlowFromSupabase,
@@ -152,11 +153,13 @@ export default function App() {
   };
 
   // 2. Aksi Update Status Pesanan Masuk (Pending -> Diproses -> Selesai)
-  const handleUpdateOrderStatus = async (orderId, newStatus) => {
+  const handleUpdateOrderStatus = async (orderId, newStatus, paymentMethod = null) => {
     setOrders((prevOrders) =>
       prevOrders.map((ord) => {
         if (ord.id === orderId) {
+          const updatedMethod = paymentMethod || ord.paymentMethod;
           if (newStatus === 'Selesai' && ord.status !== 'Selesai') {
+            const queuePrefix = ord.queueNumber && ord.queueNumber !== '-' ? `${ord.queueNumber} / ` : '';
             const autoCashFlow = {
               id: `CF-${Date.now().toString().slice(-4)}`,
               date: new Date().toLocaleDateString('id-ID', {
@@ -166,7 +169,7 @@ export default function App() {
                 hour: '2-digit',
                 minute: '2-digit',
               }),
-              description: `Pesanan Web Selesai (${ord.id}) - ${ord.customerName}`,
+              description: `Pesanan Web Selesai (${queuePrefix}${ord.id}) - ${ord.customerName} [${updatedMethod || 'Kasir'}]`,
               category: 'Penjualan',
               type: 'in',
               amount: ord.totalPrice,
@@ -178,21 +181,56 @@ export default function App() {
               console.warn('Sync cash flow to Supabase error:', e)
             );
           }
-          return { ...ord, status: newStatus };
+          return {
+            ...ord,
+            status: newStatus,
+            paymentMethod: updatedMethod,
+          };
         }
         return ord;
       })
     );
 
-    // Sync status ke Supabase
+    // Sync status & paymentMethod ke Supabase
     try {
-      await updateOrderStatusInSupabase(orderId, newStatus);
+      await updateOrderStatusInSupabase(orderId, newStatus, paymentMethod);
     } catch (err) {
       console.warn('Gagal update status pesanan di Supabase:', err);
     }
   };
 
-  // 3. Aksi Hapus Pesanan
+  // 3. Aksi Update / Edit Item Pesanan Masuk (Kondisi jika ada ubah pesanan di depan kasir)
+  const handleUpdateOrderItems = async (orderId, updatedItems, newTotalPrice, newNotes) => {
+    const target = orders.find((o) => o.id === orderId);
+
+    setOrders((prevOrders) =>
+      prevOrders.map((ord) => {
+        if (ord.id === orderId) {
+          return {
+            ...ord,
+            items: updatedItems,
+            totalPrice: newTotalPrice,
+            notes: newNotes !== undefined ? newNotes : ord.notes,
+          };
+        }
+        return ord;
+      })
+    );
+
+    try {
+      await updateOrderItemsInSupabase(
+        orderId,
+        updatedItems,
+        newTotalPrice,
+        newNotes,
+        target?.dbId
+      );
+    } catch (err) {
+      console.warn('Gagal update item pesanan di Supabase:', err);
+    }
+  };
+
+  // 4. Aksi Hapus Pesanan
   const handleDeleteOrder = async (orderId) => {
     setOrders((prev) => prev.filter((ord) => ord.id !== orderId));
     try {
@@ -289,7 +327,9 @@ export default function App() {
         {activeTab === 'pesanan' && (
           <Pesanan
             orders={orders}
+            availableProducts={products}
             onUpdateStatus={handleUpdateOrderStatus}
+            onUpdateItems={handleUpdateOrderItems}
             onDeleteOrder={handleDeleteOrder}
           />
         )}

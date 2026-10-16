@@ -3,13 +3,17 @@ import {
   Plus,
   Minus,
   Trash2,
-  QrCode,
-  CheckCircle2,
   ShoppingBag,
   Sparkles,
   Search,
+  Ticket,
+  Printer,
+  Clock,
+  AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 import ToppingModal from '../components/ToppingModal';
+import { getNextQueueNumber } from '../services/supabaseService';
 
 function generateOrderId() {
   return `ORD-${Date.now().toString().slice(-6)}`;
@@ -28,9 +32,10 @@ export default function Menu({
   const [searchQuery, setSearchQuery] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [orderNotes, setOrderNotes] = useState('');
+  const [nameError, setNameError] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [toppingModalProduct, setToppingModalProduct] = useState(null);
   const [confirmedOrder, setConfirmedOrder] = useState(null);
-  const [paidSuccess, setPaidSuccess] = useState(false);
 
   // Handle product click: if Makanan, open popup; if Minuman, add directly
   const handleProductClick = (prod) => {
@@ -56,66 +61,66 @@ export default function Menu({
 
   const formatRupiah = (num) => 'Rp' + Number(num || 0).toLocaleString('id-ID');
 
-  // Handle Checkout Confirmation
-  const handleConfirmOrderClick = () => {
+  // Handle Checkout Confirmation & Penerbitan Nomor Antrian
+  const handleConfirmOrderClick = async () => {
     if (cart.length === 0) return;
 
-    const orderId = generateOrderId();
-    const newOrder = {
-      id: orderId,
-      customerName: customerName.trim() || 'Pelanggan Web',
-      items: cart.map((i) => ({
-        name: i.name,
-        qty: i.qty,
-        price: i.price,
-        toppings: i.toppings || [],
-      })),
-      totalPrice: grandTotal,
-      status: 'Pending',
-      createdAt: 'Baru saja',
-      paymentMethod: 'QRIS',
-      notes:
-        orderNotes ||
-        (cart.some((i) => i.toppings?.length)
-          ? cart
-              .filter((i) => i.toppings?.length)
-              .map((i) => `${i.name}: ${i.toppings.map((t) => t.name).join(', ')}`)
-              .join(' | ')
-          : '-'),
-    };
+    if (!customerName.trim()) {
+      setNameError(true);
+      return;
+    }
 
-    // Save to localStorage (`menyum_orders`)
+    setIsSubmitting(true);
+    setNameError(false);
+
     try {
-      const existing = JSON.parse(localStorage.getItem('menyum_orders') || '[]');
-      localStorage.setItem('menyum_orders', JSON.stringify([newOrder, ...existing]));
-    } catch (e) {
-      console.warn('Gagal menyimpan ke localStorage:', e);
+      const orderId = generateOrderId();
+      const queueNumber = await getNextQueueNumber();
+
+      const newOrder = {
+        id: orderId,
+        queueNumber: queueNumber,
+        customerName: customerName.trim(),
+        items: cart.map((i) => ({
+          name: i.name,
+          qty: i.qty,
+          price: i.price,
+          toppings: i.toppings || [],
+        })),
+        totalPrice: grandTotal,
+        status: 'Pending',
+        createdAt: 'Baru saja',
+        paymentMethod: 'Belum Bayar (Kasir)',
+        notes:
+          orderNotes.trim() ||
+          (cart.some((i) => i.toppings?.length)
+            ? cart
+                .filter((i) => i.toppings?.length)
+                .map((i) => `${i.name}: ${i.toppings.map((t) => t.name).join(', ')}`)
+                .join(' | ')
+            : '-'),
+      };
+
+      // Simpan ke localStorage (`menyum_orders`)
+      try {
+        const existing = JSON.parse(localStorage.getItem('menyum_orders') || '[]');
+        localStorage.setItem('menyum_orders', JSON.stringify([newOrder, ...existing]));
+      } catch (e) {
+        console.warn('Gagal menyimpan ke localStorage:', e);
+      }
+
+      // Kirim realtime ke Supabase
+      if (onConfirmOrder) {
+        await onConfirmOrder(newOrder);
+      }
+
+      setConfirmedOrder(newOrder);
+      if (onClearCart) onClearCart();
+    } catch (err) {
+      console.error('Error saat konfirmasi pesanan:', err);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    if (onConfirmOrder) {
-      onConfirmOrder(newOrder);
-    }
-
-    setConfirmedOrder(newOrder);
-    setPaidSuccess(false);
-  };
-
-  const handleMarkAsPaid = () => {
-    if (!confirmedOrder) return;
-
-    // Update status to Diproses in localStorage
-    try {
-      const existing = JSON.parse(localStorage.getItem('menyum_orders') || '[]');
-      const updated = existing.map((o) =>
-        o.id === confirmedOrder.id ? { ...o, status: 'Diproses' } : o
-      );
-      localStorage.setItem('menyum_orders', JSON.stringify(updated));
-    } catch (e) {
-      console.warn('Gagal update status di localStorage:', e);
-    }
-
-    setPaidSuccess(true);
-    if (onClearCart) onClearCart();
   };
 
   return (
@@ -130,7 +135,7 @@ export default function Menu({
             Menu & daftar harga
           </h1>
           <p className="text-base md:text-lg text-[#7a5a4c]">
-            Pilih kategori, tambahkan ke keranjang, lalu bayar instan lewat QRIS.
+            Pilih kategori, tambahkan ke keranjang, lalu ambil nomor antrian untuk bayar di kasir.
           </p>
         </div>
 
@@ -341,18 +346,29 @@ export default function Menu({
 
               {/* Input Nama & Catatan */}
               {cart.length > 0 && (
-                <div className="space-y-2 pt-2">
+                <div className="space-y-2.5 pt-2">
                   <div>
                     <label className="text-xs font-bold text-[#3a1409] block mb-1">
-                      Nama Pemesan / Meja *
+                      Nama Pemesan / Meja <span className="text-[#e46000]">*</span>
                     </label>
                     <input
                       type="text"
                       placeholder="Contoh: Rian / Meja 3 Kampus"
                       value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                      className="w-full px-3 py-2 text-xs bg-white border-2 border-[#f1e4da] rounded-xl focus:border-[#e46000] outline-none"
+                      onChange={(e) => {
+                        setCustomerName(e.target.value);
+                        if (nameError) setNameError(false);
+                      }}
+                      className={`w-full px-3 py-2 text-xs bg-white border-2 rounded-xl focus:border-[#e46000] outline-none transition-colors ${
+                        nameError ? 'border-rose-500 bg-rose-50/40 text-rose-900' : 'border-[#f1e4da] text-[#3a1409]'
+                      }`}
                     />
+                    {nameError && (
+                      <p className="text-[11px] text-rose-600 mt-1 font-semibold flex items-center gap-1">
+                        <AlertCircle size={12} />
+                        <span>Nama Pemesan / Meja wajib diisi sebelum konfirmasi!</span>
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -364,7 +380,7 @@ export default function Menu({
                       placeholder="Contoh: Saus mentai jangan terlalu pedas"
                       value={orderNotes}
                       onChange={(e) => setOrderNotes(e.target.value)}
-                      className="w-full px-3 py-2 text-xs bg-white border-2 border-[#f1e4da] rounded-xl focus:border-[#e46000] outline-none"
+                      className="w-full px-3 py-2 text-xs bg-white border-2 border-[#f1e4da] rounded-xl focus:border-[#e46000] outline-none text-[#3a1409]"
                     />
                   </div>
                 </div>
@@ -381,106 +397,156 @@ export default function Menu({
               </div>
 
               <button
-                disabled={cart.length === 0}
+                disabled={cart.length === 0 || isSubmitting}
                 onClick={handleConfirmOrderClick}
-                className={`w-full py-3 rounded-full font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                  cart.length === 0
+                className={`w-full py-3.5 rounded-full font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  cart.length === 0 || isSubmitting
                     ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
-                    : 'bg-[#e46000] hover:bg-[#c85300] text-white active:scale-98'
+                    : 'bg-[#e46000] hover:bg-[#c85300] text-white active:scale-98 shadow-orange-500/20'
                 }`}
               >
-                <QrCode size={18} />
-                <span>Konfirmasi pesanan & Buat QRIS</span>
+                {isSubmitting ? (
+                  <>
+                    <RefreshCw size={17} className="animate-spin" />
+                    <span>Menerbitkan Nomor Antrian...</span>
+                  </>
+                ) : (
+                  <>
+                    <Ticket size={18} />
+                    <span>Konfirmasi Pesanan & Ambil Nomor Antrian</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
 
-          {/* Kolom Kanan: Card "Bayar dengan QRIS" */}
-          <div className="rounded-[18px] bg-white border-2 border-[#f1e4da] p-6 shadow-xs flex flex-col justify-between text-center">
+          {/* Kolom Kanan: Card "Tiket Nomor Antrian" */}
+          <div className="rounded-[18px] bg-white border-2 border-[#f1e4da] p-6 shadow-xs flex flex-col justify-between text-center relative overflow-hidden">
             <div>
               <div className="flex items-center justify-between border-b border-[#f1e4da] pb-3 text-left">
                 <div className="flex items-center gap-2">
-                  <QrCode className="text-[#e46000]" size={20} />
-                  <h2 className="text-[18.7px] font-bold text-[#3a1409]">
-                    Bayar dengan QRIS
-                  </h2>
+                  <div className="w-8 h-8 rounded-lg bg-[#fff2e5] text-[#e46000] flex items-center justify-center border border-[#f1e4da]">
+                    <Ticket size={18} />
+                  </div>
+                  <div>
+                    <h2 className="text-[18.7px] font-bold text-[#3a1409]">
+                      Tiket Nomor Antrian
+                    </h2>
+                    <span className="text-[11px] text-[#7a5a4c]">Pay at Cashier MenYum</span>
+                  </div>
                 </div>
                 {confirmedOrder && (
-                  <span className="text-xs font-mono font-bold bg-[#fff2e5] text-[#e46000] px-2 py-0.5 rounded-md border border-[#f1e4da]">
+                  <span className="text-xs font-mono font-bold bg-[#fff2e5] text-[#e46000] px-2.5 py-1 rounded-md border border-[#f1e4da]">
                     {confirmedOrder.id}
                   </span>
                 )}
               </div>
 
-              {/* QR Code Container */}
-              <div className="min-h-[220px] rounded-[14px] border-2 border-[#f1e4da] border-dashed flex flex-col items-center justify-center p-4 my-4 bg-[#fff8f2]/50">
+              {/* Tampilan Tiket Nomor Antrian */}
+              <div className="min-h-[250px] rounded-[16px] border-2 border-[#f1e4da] border-dashed flex flex-col items-center justify-center p-5 my-4 bg-gradient-to-b from-[#fff8f2] to-white relative">
                 {!confirmedOrder ? (
                   <div className="text-center space-y-2 p-4">
-                    <QrCode size={48} className="mx-auto text-[#f1e4da] stroke-1" />
-                    <p className="text-[13px] text-[#7a5a4c] max-w-[200px]">
-                      Kode QR muncul di sini setelah pesanan dikonfirmasi
-                    </p>
-                  </div>
-                ) : paidSuccess ? (
-                  <div className="space-y-3 py-4 animate-in zoom-in-95">
-                    <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-sm">
-                      <CheckCircle2 size={32} />
+                    <div className="w-16 h-16 rounded-2xl bg-[#fff2e5] border border-[#f1e4da] flex items-center justify-center mx-auto text-[#e46000]">
+                      <Ticket size={32} />
                     </div>
-                    <h3 className="font-bold text-[#3a1409] text-base">
-                      Pembayaran Diterima!
-                    </h3>
-                    <p className="text-xs text-[#7a5a4c] max-w-xs leading-relaxed">
-                      Pesananmu <strong>{confirmedOrder.id}</strong> sedang disiapkan oleh tim dapur MenYum. Terima kasih!
+                    <h4 className="font-bold text-[#3a1409] text-sm">Nomor Antrian Belum Terbit</h4>
+                    <p className="text-[12px] text-[#7a5a4c] max-w-[220px] mx-auto leading-relaxed">
+                      Pilih menu dan klik "Konfirmasi Pesanan & Ambil Nomor Antrian" di sebelah kiri untuk mendapatkan tiket.
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-3 py-2">
-                    {/* Simulated Clean QR Canvas */}
-                    <div className="w-40 h-40 bg-white p-2.5 rounded-xl border border-[#f1e4da] shadow-sm flex flex-col items-center justify-center mx-auto relative overflow-hidden">
-                      <div className="w-full h-full bg-[#3a1409] rounded-lg flex flex-col items-center justify-center text-white relative">
-                        <QrCode size={90} className="text-white" />
-                        <span className="text-[9px] font-mono tracking-widest text-[#f7b32b] font-bold mt-1">
-                          QRIS MENYUM
-                        </span>
+                  <div className="w-full space-y-3.5 py-2 animate-in zoom-in-95">
+                    {/* Status Badge */}
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold border border-amber-200">
+                      <Clock size={12} className="animate-pulse" />
+                      <span>Menunggu Pembayaran di Kasir</span>
+                    </div>
+
+                    {/* BIG Queue Number */}
+                    <div className="py-2">
+                      <span className="text-[11px] font-bold tracking-widest text-[#7a5a4c] uppercase block">
+                        Nomor Antrian Anda
+                      </span>
+                      <div className="text-5xl md:text-6xl font-black text-[#e46000] tracking-wider my-1 drop-shadow-xs">
+                        {confirmedOrder.queueNumber || 'A-001'}
+                      </div>
+                      <span className="text-xs font-medium text-[#7a5a4c]">
+                        Atas Nama: <strong className="text-[#3a1409] font-bold">{confirmedOrder.customerName}</strong>
+                      </span>
+                    </div>
+
+                    {/* Rincian Singkat Pesanan */}
+                    <div className="bg-white rounded-xl border border-[#f1e4da] p-3 text-left space-y-1.5 text-xs">
+                      <div className="text-[11px] font-bold text-[#7a5a4c] uppercase tracking-wider border-b border-[#f1e4da]/60 pb-1 flex justify-between">
+                        <span>Rincian Menu</span>
+                        <span>{confirmedOrder.items?.length || 0} Item</span>
+                      </div>
+                      <div className="max-h-24 overflow-y-auto space-y-1 pr-1">
+                        {confirmedOrder.items?.map((it, idx) => (
+                          <div key={idx} className="flex justify-between text-slate-700">
+                            <span className="line-clamp-1">
+                              {it.qty}x {it.name}
+                              {it.toppings && it.toppings.length > 0 && (
+                                <span className="text-[10px] text-[#e46000] ml-1 font-semibold">
+                                  (+{it.toppings.map((t) => t.name).join(', ')})
+                                </span>
+                              )}
+                            </span>
+                            <span className="font-semibold text-slate-900 shrink-0 ml-2">
+                              {formatRupiah(it.price * it.qty)}
+                            </span>
+                          </div>
+                        ))}
                       </div>
                     </div>
 
-                    <div className="space-y-0.5">
-                      <span className="text-xs text-[#7a5a4c]">Nominal Pembayaran:</span>
-                      <div className="text-2xl font-black text-[#e46000]">
+                    {/* Nominal Pembayaran */}
+                    <div className="pt-1">
+                      <span className="text-xs text-[#7a5a4c]">Total Tagihan (Bayar di Kasir):</span>
+                      <div className="text-2xl md:text-3xl font-black text-[#e46000]">
                         {formatRupiah(confirmedOrder.totalPrice)}
                       </div>
-                      <p className="text-[11px] text-[#7a5a4c]">
-                        Bisa scan via BCA, GoPay, OVO, Dana, ShopeePay
-                      </p>
+                    </div>
+
+                    {/* Instruksi Tegas ke Kasir */}
+                    <div className="p-3.5 rounded-xl bg-amber-50 border-2 border-amber-200 text-amber-900 text-xs text-left flex items-start gap-2.5 shadow-xs">
+                      <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                      <div className="space-y-1">
+                        <p className="font-extrabold text-[#3a1409] leading-snug">
+                          Silakan menuju kasir dan sebutkan Nomor Antrian Anda untuk melakukan pembayaran.
+                        </p>
+                        <p className="text-[11px] text-amber-800 leading-relaxed">
+                          Kasir kami dapat memproses pembayaran via <strong>Tunai</strong> atau <strong>QRIS</strong> serta memverifikasi pesanan Anda.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Tombol Aksi QRIS */}
+            {/* Tombol Aksi Bawah */}
             <div className="pt-2">
-              {confirmedOrder && !paidSuccess && (
-                <button
-                  onClick={handleMarkAsPaid}
-                  className="w-full py-3 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <CheckCircle2 size={18} />
-                  <span>Tandai Sudah Bayar</span>
-                </button>
-              )}
-
-              {paidSuccess && (
-                <button
-                  onClick={() => {
-                    setConfirmedOrder(null);
-                    setPaidSuccess(false);
-                  }}
-                  className="w-full py-2.5 rounded-full bg-[#3a1409] text-white font-bold text-xs hover:bg-[#54180c] transition"
-                >
-                  Buat Pesanan Baru
-                </button>
+              {confirmedOrder && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => window.print()}
+                    className="flex-1 py-2.5 rounded-full bg-white hover:bg-[#fff2e5] border-2 border-[#f1e4da] text-[#3a1409] font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <Printer size={15} />
+                    <span>Cetak Tiket</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setConfirmedOrder(null);
+                      setCustomerName('');
+                      setOrderNotes('');
+                    }}
+                    className="flex-1 py-2.5 rounded-full bg-[#e46000] hover:bg-[#c85300] text-white font-bold text-xs transition-colors shadow-xs active:scale-95 cursor-pointer"
+                  >
+                    Buat Pesanan Baru
+                  </button>
+                </div>
               )}
             </div>
           </div>
