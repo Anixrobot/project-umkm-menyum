@@ -13,6 +13,7 @@ import {
   Video,
   Info,
   Play,
+  LogOut,
 } from 'lucide-react';
 import { formatVideoEmbedUrl } from '../utils/videoUtils';
 
@@ -24,6 +25,8 @@ export default function AdminCms({
   onDeleteReview,
   siteSettings = {},
   onUpdateSiteSettings,
+  adminUser = null,
+  onLogout,
 }) {
   const [activeTab, setActiveTab] = useState('articles'); // 'articles' | 'reviews' | 'settings'
 
@@ -95,6 +98,38 @@ export default function AdminCms({
   return (
     <div className="py-8 md:py-14 text-left min-h-[70vh]">
       <div className="max-w-[1040px] mx-auto px-5 space-y-6">
+        {/* User Session Bar */}
+        {adminUser && (
+          <div className="p-3.5 px-4.5 rounded-2xl bg-[#FFFAF2] border border-[#f1e4da] flex flex-wrap items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-[#e46000] text-white flex items-center justify-center font-black text-xs uppercase shadow-xs">
+                {adminUser.username?.slice(0, 2) || 'AD'}
+              </div>
+              <div className="leading-tight">
+                <div className="text-[11px] text-[#7a5a4c]">Masuk sebagai:</div>
+                <div className="font-extrabold text-sm text-[#3a1409] flex items-center gap-2">
+                  <span>{adminUser.name || adminUser.username}</span>
+                  <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-[#e46000]/10 text-[#e46000] border border-[#e46000]/20">
+                    {adminUser.role || 'Admin'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {onLogout && (
+              <button
+                type="button"
+                onClick={onLogout}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-red-200 bg-white text-red-600 hover:bg-red-50 text-xs font-bold shadow-2xs transition active:scale-95 cursor-pointer"
+                title="Keluar dari Panel Web"
+              >
+                <LogOut size={14} />
+                <span>Keluar (Logout)</span>
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Banner Info Pemisahan Peran Dashboard Kasir vs Web CMS */}
         <div className="p-4 rounded-2xl bg-[#fff8f2] border border-[#f1e4da] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
           <div className="flex items-center gap-3">

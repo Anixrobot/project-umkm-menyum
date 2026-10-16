@@ -423,3 +423,94 @@ export async function updateSiteSettingsInSupabase(settings) {
   return resultData;
 }
 
+// ==========================================
+// 6. AUTENTIKASI ADMIN / KASIR (admin_users)
+// ==========================================
+
+export async function loginAdminUser(username, password) {
+  const cleanUsername = String(username || '').trim();
+  const cleanPassword = String(password || '');
+
+  if (!cleanUsername || !cleanPassword) {
+    return {
+      success: false,
+      error: 'Username dan password wajib diisi.',
+    };
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('admin_users')
+      .select('id, username, password, name, role, is_active')
+      .eq('username', cleanUsername)
+      .eq('password', cleanPassword)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error saat login admin_users di Supabase:', error);
+      throw error;
+    }
+
+    if (data) {
+      return {
+        success: true,
+        user: {
+          id: data.id,
+          username: data.username,
+          name: data.name,
+          role: data.role,
+        },
+      };
+    }
+
+    // Jika tidak ditemukan di database
+    return {
+      success: false,
+      error: 'Username atau password salah, atau akun dinonaktifkan.',
+    };
+  } catch (err) {
+    console.warn('Gagal memverifikasi login via Supabase, memeriksa fallback lokal...', err);
+
+    // Fallback kredensial darurat jika koneksi database mengalami kendala
+    const fallbackAccounts = [
+      {
+        id: 'c67bd55c-8f2e-40a8-a293-b459c0eb9b31',
+        username: 'admin',
+        password: 'menyumepirginpren124',
+        name: 'Owner / Admin MenYum',
+        role: 'admin',
+      },
+      {
+        id: '2a1f2dba-82d6-438d-8697-7a6a4c2efe5a',
+        username: 'kasir',
+        password: 'kasir123',
+        name: 'Kasir Outlet Jatiwaringin',
+        role: 'kasir',
+      },
+    ];
+
+    const matched = fallbackAccounts.find(
+      (acc) => acc.username === cleanUsername && acc.password === cleanPassword
+    );
+
+    if (matched) {
+      return {
+        success: true,
+        user: {
+          id: matched.id,
+          username: matched.username,
+          name: matched.name,
+          role: matched.role,
+        },
+      };
+    }
+
+    return {
+      success: false,
+      error: 'Username atau password salah, atau koneksi database terputus.',
+    };
+  }
+}
+
+

@@ -7,6 +7,7 @@ import Menu from './pages/Menu';
 import Testimoni from './pages/Testimoni';
 import Artikel from './pages/Artikel';
 import AdminCms from './pages/AdminCms';
+import AdminLogin from './components/AdminLogin';
 import { supabase } from './lib/supabaseClient';
 import {
   fetchProductsFromSupabase,
@@ -49,6 +50,14 @@ export default function App() {
   });
 
   const [selectedArticle, setSelectedArticle] = useState(null);
+  const [adminUser, setAdminUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('menyum_admin_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
 
   // 1. Fetch Data dari Supabase saat web pertama kali dibuka
   useEffect(() => {
@@ -281,6 +290,15 @@ export default function App() {
     }
   };
 
+  const handleAdminLogout = () => {
+    try {
+      localStorage.removeItem('menyum_admin_user');
+    } catch (e) {
+      console.warn('Gagal menghapus sesi login:', e);
+    }
+    setAdminUser(null);
+  };
+
   const cartTotalItems = cart.reduce((acc, item) => acc + item.qty, 0);
 
   return (
@@ -333,18 +351,26 @@ export default function App() {
           />
         )}
 
-        {activePage === 'cms' && (
-          <AdminCms
-            key={siteSettings.updated_at || siteSettings.video_url || 'admin-cms'}
-            articles={articles}
-            onAddArticle={handleAddArticle}
-            onDeleteArticle={handleDeleteArticle}
-            reviews={reviews}
-            onDeleteReview={handleDeleteReview}
-            siteSettings={siteSettings}
-            onUpdateSiteSettings={handleUpdateSiteSettings}
-          />
-        )}
+        {activePage === 'cms' &&
+          (!adminUser ? (
+            <AdminLogin
+              onLoginSuccess={(user) => setAdminUser(user)}
+              onBackToHome={() => setActivePage('home')}
+            />
+          ) : (
+            <AdminCms
+              key={siteSettings.updated_at || siteSettings.video_url || 'admin-cms'}
+              articles={articles}
+              onAddArticle={handleAddArticle}
+              onDeleteArticle={handleDeleteArticle}
+              reviews={reviews}
+              onDeleteReview={handleDeleteReview}
+              siteSettings={siteSettings}
+              onUpdateSiteSettings={handleUpdateSiteSettings}
+              adminUser={adminUser}
+              onLogout={handleAdminLogout}
+            />
+          ))}
       </main>
 
       {/* 3. Global Footer */}
