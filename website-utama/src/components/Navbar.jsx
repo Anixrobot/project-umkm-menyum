@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ShoppingBag, Menu as MenuIcon, X } from 'lucide-react';
+import logoMenyum from '../assets/beranda/LOGO MENYUM.svg';
 
 export default function Navbar({ activePage, setActivePage, cartCount = 0 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -25,35 +26,14 @@ export default function Navbar({ activePage, setActivePage, cartCount = 0 }) {
         {/* Left Brand Logo */}
         <button
           onClick={() => handleNavClick('home')}
-          className="flex items-center gap-2.5 text-left focus:outline-none group"
+          className="flex items-center text-left focus:outline-none group cursor-pointer"
+          aria-label="MenYum Mentai Yummy Home"
         >
-          {/* Mascot / Bowl SVG Icon */}
-          <div className="w-9 h-9 rounded-full bg-[#FFFAF2] border border-[#f1e4da] flex items-center justify-center p-1 shadow-xs group-hover:scale-105 transition-transform">
-            <svg viewBox="0 0 40 40" className="w-7 h-7" fill="none">
-              <circle cx="20" cy="20" r="18" fill="#F99718" />
-              <path
-                d="M8 22C8 28.6274 13.3726 34 20 34C26.6274 34 32 28.6274 32 22H8Z"
-                fill="#682D1D"
-              />
-              <path
-                d="M10 21C11.5 17 14 15 20 15C26 15 28.5 17 30 21H10Z"
-                fill="#F2690C"
-              />
-              <circle cx="20" cy="18" r="3.5" fill="#FFFAF2" />
-              <circle cx="15" cy="25" r="1.5" fill="#F99718" />
-              <circle cx="25" cy="25" r="1.5" fill="#F99718" />
-            </svg>
-          </div>
-
-          <div className="flex flex-col leading-none">
-            <span className="text-[26px] md:text-[28px] font-bold tracking-tight">
-              <span className="text-[#3a1409]">M</span>
-              <span className="text-[#e46000]">enYum</span>
-            </span>
-            <span className="text-[9px] md:text-[10px] font-bold text-[#7a5a4c] tracking-[0.2em] -mt-0.5">
-              MENTAI YUMMY
-            </span>
-          </div>
+          <img
+            src={logoMenyum}
+            alt="MenYum Mentai Yummy"
+            className="h-10 md:h-11 w-auto object-contain group-hover:scale-105 transition-transform"
+          />
         </button>
 
         {/* Center Desktop Navigation Pills */}
