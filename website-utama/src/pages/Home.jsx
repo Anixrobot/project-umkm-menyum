@@ -20,36 +20,36 @@ export default function Home({
   return (
     <div className="w-full">
       {/* 1. Hero Section */}
-      <section className="py-6 md:py-12">
-        <div className="max-w-[1040px] mx-auto px-5">
-          <div className="bg-linear-to-br from-[#fff8f2] via-white to-[#fff2e5] border-2 border-[#f1e4da] rounded-3xl p-6 md:p-12 shadow-xs">
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+      <section className="py-4 sm:py-6 md:py-12">
+        <div className="max-w-[1040px] mx-auto px-4 sm:px-5">
+          <div className="bg-linear-to-br from-[#fff8f2] via-white to-[#fff2e5] border-2 border-[#f1e4da] rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 shadow-xs">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-8 items-center">
               {/* Kolom Kiri: Teks & CTA */}
-              <div className="md:col-span-7 space-y-4 text-left">
+              <div className="md:col-span-7 space-y-3.5 sm:space-y-4 text-left">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#f7b32b]/20 border border-[#f7b32b]/40 text-[#3a1409] text-xs font-bold tracking-wide">
                   <Sparkles size={14} className="text-[#e46000]" />
                   <span>UMKM Kuliner Jepang Kampus</span>
                 </div>
 
-                <h1 className="text-4xl md:text-[60px] lg:text-[66px] font-extrabold leading-[1.1] text-[#3a1409]">
+                <h1 className="text-3xl sm:text-4xl md:text-[60px] lg:text-[66px] font-extrabold leading-[1.15] sm:leading-[1.1] text-[#3a1409]">
                   Mentai yang <span className="text-[#e46000]">bikin nagih</span>, harga pelajar.
                 </h1>
 
-                <p className="text-base md:text-lg text-[#7a5a4c] leading-relaxed max-w-xl">
+                <p className="text-sm sm:text-base md:text-lg text-[#7a5a4c] leading-relaxed max-w-xl">
                   Saus mentai creamy, dibakar sebentar sampai wangi. Dibuat saat dipesan untuk sarapan atau makan siang kamu.
                 </p>
 
-                <div className="flex flex-wrap gap-3 pt-3">
+                <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 pt-2 sm:pt-3">
                   <button
                     onClick={() => onNavigate('profil')}
-                    className="px-[26px] py-3 rounded-full bg-[#e46000] hover:bg-[#c85300] text-white font-bold text-base shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer"
+                    className="w-full sm:w-auto px-[26px] py-3 rounded-full bg-[#e46000] hover:bg-[#c85300] text-white font-bold text-sm sm:text-base shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer text-center"
                   >
                     Tentang MenYum
                   </button>
 
                   <button
                     onClick={() => setVideoModalOpen(true)}
-                    className="px-[26px] py-3 rounded-full bg-[#e46000] hover:bg-[#c85300] text-white font-bold text-base shadow-md hover:shadow-lg transition-all flex items-center gap-2 active:scale-95 cursor-pointer"
+                    className="w-full sm:w-auto px-[26px] py-3 rounded-full bg-[#e46000] hover:bg-[#c85300] text-white font-bold text-sm sm:text-base shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer text-center"
                   >
                     <Play size={18} className="fill-white" />
                     <span>Lihat Video</span>
@@ -61,7 +61,7 @@ export default function Home({
               <div className="md:col-span-5 flex justify-center">
                 <div className="relative group">
                   {/* Lingkaran Frame Kuning #f7b32b */}
-                  <div className="w-[280px] h-[280px] sm:w-[320px] sm:h-[320px] md:w-[360px] md:h-[360px] rounded-full bg-[#f7b32b] flex items-center justify-center mx-auto shadow-2xl shadow-[#f7b32b]/30 p-3 sm:p-4 transition-transform group-hover:scale-105 duration-300">
+                  <div className="w-[230px] h-[230px] xs:w-[260px] xs:h-[260px] sm:w-[320px] sm:h-[320px] md:w-[360px] md:h-[360px] rounded-full bg-[#f7b32b] flex items-center justify-center mx-auto shadow-2xl shadow-[#f7b32b]/30 p-2.5 sm:p-4 transition-transform group-hover:scale-105 duration-300">
                     <img
                       src={mentaiHero2}
                       alt="Nasi Mentai MenYum"
@@ -75,47 +75,47 @@ export default function Home({
                   </div>
 
                   {/* Floating Price Tag Badge */}
-                  <div className="absolute -bottom-2 -left-2 sm:bottom-4 sm:left-2 bg-white/95 backdrop-blur-xs border-2 border-[#f1e4da] px-4 py-2 rounded-2xl shadow-lg">
-                    <span className="text-[11px] font-bold text-[#7a5a4c] block">Mulai dari</span>
-                    <span className="text-lg font-black text-[#e46000]">Rp15.000</span>
+                  <div className="absolute -bottom-2 -left-2 sm:bottom-4 sm:left-2 bg-white/95 backdrop-blur-xs border-2 border-[#f1e4da] px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-2xl shadow-lg">
+                    <span className="text-[10px] sm:text-[11px] font-bold text-[#7a5a4c] block">Mulai dari</span>
+                    <span className="text-base sm:text-lg font-black text-[#e46000]">Rp15.000</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* 3 Value Highlights Bar */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 pt-8 border-t border-[#f1e4da]">
-              <div className="flex items-start gap-3.5 p-3 rounded-2xl hover:bg-white/60 transition-colors">
-                <div className="w-11 h-11 rounded-xl bg-[#fff2e5] text-[#e46000] flex items-center justify-center shrink-0 border border-[#f1e4da]">
-                  <Flame size={24} />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-6 mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-[#f1e4da]">
+              <div className="flex items-start gap-3 sm:gap-3.5 p-2.5 sm:p-3 rounded-2xl hover:bg-white/60 transition-colors">
+                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#fff2e5] text-[#e46000] flex items-center justify-center shrink-0 border border-[#f1e4da]">
+                  <Flame size={22} className="sm:w-6 sm:h-6" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-[#3a1409] text-[17px]">Dibakar saat dipesan</h4>
-                  <p className="text-sm text-[#7a5a4c] mt-0.5 leading-snug">
+                  <h4 className="font-bold text-[#3a1409] text-base sm:text-[17px]">Dibakar saat dipesan</h4>
+                  <p className="text-xs sm:text-sm text-[#7a5a4c] mt-0.5 leading-snug">
                     Mentai selalu hangat, smokey, dan creamy.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3.5 p-3 rounded-2xl hover:bg-white/60 transition-colors">
-                <div className="w-11 h-11 rounded-xl bg-[#fff8f2] text-[#f7b32b] flex items-center justify-center shrink-0 border border-[#f1e4da]">
-                  <QrCode size={24} />
+              <div className="flex items-start gap-3 sm:gap-3.5 p-2.5 sm:p-3 rounded-2xl hover:bg-white/60 transition-colors">
+                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#fff8f2] text-[#f7b32b] flex items-center justify-center shrink-0 border border-[#f1e4da]">
+                  <QrCode size={22} className="sm:w-6 sm:h-6" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-[#3a1409] text-[17px]">Bayar pakai QRIS</h4>
-                  <p className="text-sm text-[#7a5a4c] mt-0.5 leading-snug">
+                  <h4 className="font-bold text-[#3a1409] text-base sm:text-[17px]">Bayar pakai QRIS</h4>
+                  <p className="text-xs sm:text-sm text-[#7a5a4c] mt-0.5 leading-snug">
                     Semua e-wallet dan mobile banking praktis.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3.5 p-3 rounded-2xl hover:bg-white/60 transition-colors">
-                <div className="w-11 h-11 rounded-xl bg-[#fff2e5] text-[#e46000] flex items-center justify-center shrink-0 border border-[#f1e4da]">
-                  <Bike size={24} />
+              <div className="flex items-start gap-3 sm:gap-3.5 p-2.5 sm:p-3 rounded-2xl hover:bg-white/60 transition-colors">
+                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#fff2e5] text-[#e46000] flex items-center justify-center shrink-0 border border-[#f1e4da]">
+                  <Bike size={22} className="sm:w-6 sm:h-6" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-[#3a1409] text-[17px]">Antar area kampus</h4>
-                  <p className="text-sm text-[#7a5a4c] mt-0.5 leading-snug">
+                  <h4 className="font-bold text-[#3a1409] text-base sm:text-[17px]">Antar area kampus</h4>
+                  <p className="text-xs sm:text-sm text-[#7a5a4c] mt-0.5 leading-snug">
                     Gratis ongkir pesan banyak mulai Rp40.000.
                   </p>
                 </div>
@@ -126,27 +126,27 @@ export default function Home({
       </section>
 
       {/* 2. About Preview Section */}
-      <section className="my-10 md:my-16">
-        <div className="max-w-[1040px] mx-auto px-5">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+      <section className="my-8 sm:my-10 md:my-16">
+        <div className="max-w-[1040px] mx-auto px-4 sm:px-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-10 items-center">
             {/* Konten Teks */}
-            <div className="space-y-4 text-left">
-              <h2 className="text-3xl md:text-[42px] font-bold text-[#3a1409] leading-tight">
+            <div className="space-y-3.5 sm:space-y-4 text-left">
+              <h2 className="text-2xl sm:text-3xl md:text-[42px] font-bold text-[#3a1409] leading-tight">
                 Nikmati makanan <span className="text-[#e46000]">Jepang khas</span> MenYum
               </h2>
 
-              <p className="text-base text-[#7a5a4c] leading-relaxed">
+              <p className="text-sm sm:text-base text-[#7a5a4c] leading-relaxed">
                 MenYum merupakan UMKM yang bergerak di bidang kuliner dengan menawarkan produk makanan dan minuman yang lezat, praktis, dan terjangkau.
               </p>
 
-              <p className="text-base text-[#7a5a4c] leading-relaxed">
+              <p className="text-sm sm:text-base text-[#7a5a4c] leading-relaxed">
                 MenYum menyediakan nasi mentai telur sebagai pilihan sarapan atau makan siang serta dalgona coffee sebagai teman beraktivitas. Kami berkomitmen untuk menjaga kualitas dan cita rasa produk dengan harga yang terjangkau bagi mahasiswa maupun pekerja.
               </p>
 
               <div className="pt-2">
                 <button
                   onClick={() => onNavigate('menu')}
-                  className="px-[26px] py-3 rounded-full bg-[#e46000] hover:bg-[#c85300] text-white font-bold text-base shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+                  className="w-full sm:w-auto px-[26px] py-3 rounded-full bg-[#e46000] hover:bg-[#c85300] text-white font-bold text-sm sm:text-base shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
                 >
                   <span>Lihat menu</span>
                   <ArrowRight size={17} />
@@ -160,7 +160,7 @@ export default function Home({
                 <img
                   src={mentaiCombo1}
                   alt="Kelezatan Nasi Mentai dan Dalgona Coffee Khas MenYum"
-                  className="w-full max-h-[380px] md:max-h-[440px] object-contain drop-shadow-xl transition-transform duration-500 group-hover:scale-105"
+                  className="w-full max-h-[300px] sm:max-h-[380px] md:max-h-[440px] object-contain drop-shadow-xl transition-transform duration-500 group-hover:scale-105"
                   onError={(e) => {
                     e.target.onerror = null;
                     e.target.src =
@@ -174,21 +174,21 @@ export default function Home({
       </section>
 
       {/* 3. Artikel & Berita Preview Section */}
-      <section className="my-12 md:my-16">
-        <div className="max-w-[1040px] mx-auto px-5 text-left">
-          <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
+      <section className="my-8 sm:my-12 md:my-16">
+        <div className="max-w-[1040px] mx-auto px-4 sm:px-5 text-left">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 sm:mb-8">
             <div>
-              <h2 className="text-3xl md:text-[40px] font-bold text-[#3a1409] leading-tight">
+              <h2 className="text-2xl sm:text-3xl md:text-[40px] font-bold text-[#3a1409] leading-tight">
                 Artikel & berita
               </h2>
-              <p className="text-base text-[#7a5a4c] mt-1">
+              <p className="text-sm sm:text-base text-[#7a5a4c] mt-1">
                 Info gizi dan kabar terbaru dari dapur kami.
               </p>
             </div>
 
             <button
               onClick={() => onNavigate('artikel')}
-              className="px-[26px] py-2.5 rounded-full bg-[#e46000] hover:bg-[#c85300] text-white font-bold text-sm md:text-base shadow-sm transition-all active:scale-95 cursor-pointer"
+              className="w-full sm:w-auto px-[26px] py-2.5 rounded-full bg-[#e46000] hover:bg-[#c85300] text-white font-bold text-sm md:text-base shadow-sm transition-all active:scale-95 cursor-pointer text-center"
             >
               Lihat selengkapnya
             </button>
@@ -196,11 +196,11 @@ export default function Home({
 
           {/* Grid 3 Kartu Artikel */}
           {previewArticles.length === 0 ? (
-            <div className="py-10 text-center rounded-2xl bg-[#fff8f2] border-2 border-dashed border-[#f1e4da] p-6 text-sm text-[#7a5a4c]">
-              Belum ada artikel yang dipublikasikan. Tambahkan artikel baru melalui menu <strong>Panel Web</strong>.
+            <div className="py-8 sm:py-10 text-center rounded-2xl bg-[#fff8f2] border-2 border-dashed border-[#f1e4da] p-6 text-sm text-[#7a5a4c]">
+              Belum ada artikel yang dipublikasikan.
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
               {previewArticles.map((art) => (
               <div
                 key={art.id}

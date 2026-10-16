@@ -46,33 +46,33 @@ export default function Testimoni({ reviews = [], onAddReview }) {
   };
 
   return (
-    <div className="py-8 md:py-14 text-left">
-      <div className="max-w-[1040px] mx-auto px-5 space-y-10">
+    <div className="py-6 sm:py-8 md:py-14 text-left">
+      <div className="max-w-[1040px] mx-auto px-4 sm:px-5 space-y-8 sm:space-y-10">
         {/* Header */}
         <div className="space-y-2">
           <div className="inline-block px-3.5 py-1 rounded-full bg-[#f7b32b]/20 border border-[#f7b32b]/40 text-[#3a1409] text-xs font-bold">
             Testimoni Nyata Pembeli
           </div>
-          <h1 className="text-4xl md:text-[52px] font-extrabold text-[#3a1409] leading-tight">
+          <h1 className="text-3xl sm:text-4xl md:text-[52px] font-extrabold text-[#3a1409] leading-tight">
             Kata pelanggan
           </h1>
-          <p className="text-base md:text-lg text-[#7a5a4c]">
+          <p className="text-sm sm:text-base md:text-lg text-[#7a5a4c]">
             Dari semua, untuk semua. Cerita jujur mereka yang sudah mencicipi MenYum.
           </p>
         </div>
 
         {/* Grid 3 Kolom Ulasan */}
         {reviews.length === 0 ? (
-          <div className="py-12 text-center rounded-2xl bg-[#fff8f2] border-2 border-dashed border-[#f1e4da] p-8 text-[#7a5a4c] space-y-1">
+          <div className="py-10 sm:py-12 text-center rounded-2xl bg-[#fff8f2] border-2 border-dashed border-[#f1e4da] p-6 sm:p-8 text-[#7a5a4c] space-y-1">
             <p className="font-bold text-[#3a1409] text-base">Belum ada ulasan pembeli</p>
             <p className="text-sm">Jadilah yang pertama menulis ulasan melalui formulir di bawah!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5">
             {reviews.map((rev) => (
               <div
                 key={rev.id}
-                className="bg-[#fff8f2] border-l-[5px] border-l-[#f7b32b] rounded-tr-[18px] rounded-br-[18px] border-y border-r border-[#f1e4da]/60 p-[22px] flex flex-col justify-between min-h-[145px] shadow-xs hover:shadow-md transition-shadow relative"
+                className="bg-[#fff8f2] border-l-[5px] border-l-[#f7b32b] rounded-tr-[18px] rounded-br-[18px] border-y border-r border-[#f1e4da]/60 p-4 sm:p-[22px] flex flex-col justify-between min-h-[140px] sm:min-h-[145px] shadow-xs hover:shadow-md transition-shadow relative"
               >
                 <div className="space-y-2">
                   {/* Star rating */}
@@ -83,7 +83,7 @@ export default function Testimoni({ reviews = [], onAddReview }) {
                   </div>
 
                   {/* Review Text */}
-                  <p className="text-[#3a1409] text-[15px] font-medium leading-relaxed italic">
+                  <p className="text-[#3a1409] text-sm sm:text-[15px] font-medium leading-relaxed italic">
                     &quot;{rev.comment || rev.text}&quot;
                   </p>
                 </div>
@@ -110,13 +110,13 @@ export default function Testimoni({ reviews = [], onAddReview }) {
         )}
 
         {/* Form "Tulis ulasanmu" */}
-        <div className="max-w-[540px] pt-4">
-          <div className="rounded-[20px] bg-white border-2 border-[#f1e4da] p-6 md:p-8 shadow-xs space-y-4">
+        <div className="max-w-[540px] pt-2 sm:pt-4">
+          <div className="rounded-[20px] bg-white border-2 border-[#f1e4da] p-5 sm:p-6 md:p-8 shadow-xs space-y-4">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-xl bg-[#fff2e5] text-[#e46000] flex items-center justify-center border border-[#f1e4da]">
                 <MessageSquarePlus size={20} />
               </div>
-              <h2 className="text-3xl md:text-4xl font-extrabold text-[#3a1409]">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#3a1409]">
                 Tulis ulasanmu
               </h2>
             </div>

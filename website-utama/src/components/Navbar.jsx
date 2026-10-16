@@ -28,17 +28,17 @@ export default function Navbar({ activePage, setActivePage, cartCount = 0 }) {
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white border-b border-[#f1e4da] h-16 transition-all duration-200">
-      <div className="max-w-[1040px] mx-auto px-5 h-full flex items-center justify-between">
+      <div className="max-w-[1040px] mx-auto px-3 sm:px-5 h-full flex items-center justify-between">
         {/* Left Brand Logo */}
         <button
           onClick={() => handleNavClick('home')}
-          className="flex items-center text-left focus:outline-none group cursor-pointer"
+          className="flex items-center text-left focus:outline-none group cursor-pointer shrink-0"
           aria-label="MenYum Mentai Yummy Home"
         >
           <img
             src={logoMenyum}
             alt="MenYum Mentai Yummy"
-            className="h-10 md:h-11 w-auto object-contain group-hover:scale-105 transition-transform"
+            className="h-8 sm:h-9 md:h-11 max-w-[130px] sm:max-w-none w-auto object-contain group-hover:scale-105 transition-transform"
           />
         </button>
 
@@ -63,15 +63,16 @@ export default function Navbar({ activePage, setActivePage, cartCount = 0 }) {
         </nav>
 
         {/* Right CTA Button */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <button
             onClick={() => handleNavClick('menu')}
-            className="flex items-center gap-2 px-4 md:px-[26px] py-2 md:py-2.5 rounded-full bg-[#e46000] hover:bg-[#c85300] text-white text-sm md:text-base font-bold shadow-sm hover:shadow transition-all active:scale-95 cursor-pointer"
+            className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 md:px-[26px] py-1.5 sm:py-2 md:py-2.5 rounded-full bg-[#e46000] hover:bg-[#c85300] text-white text-xs sm:text-sm md:text-base font-bold shadow-sm hover:shadow transition-all active:scale-95 cursor-pointer whitespace-nowrap"
           >
-            <ShoppingBag size={17} />
-            <span>Pesan sekarang</span>
+            <ShoppingBag size={16} className="shrink-0" />
+            <span className="hidden sm:inline">Pesan sekarang</span>
+            <span className="sm:hidden">Pesan</span>
             {cartCount > 0 && (
-              <span className="bg-[#f7b32b] text-[#3a1409] text-xs font-black px-2 py-0.5 rounded-full ml-0.5 animate-pulse">
+              <span className="bg-[#f7b32b] text-[#3a1409] text-[10px] sm:text-xs font-black px-1.5 sm:px-2 py-0.5 rounded-full ml-0.5 animate-pulse">
                 {cartCount}
               </span>
             )}
@@ -80,7 +81,7 @@ export default function Navbar({ activePage, setActivePage, cartCount = 0 }) {
           {/* Mobile menu toggle */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 text-[#3a1409] hover:text-[#e46000] rounded-lg border border-[#f1e4da]"
+            className="md:hidden p-1.5 sm:p-2 text-[#3a1409] hover:text-[#e46000] rounded-lg border border-[#f1e4da] transition"
             aria-label="Toggle navigation"
           >
             {mobileMenuOpen ? <X size={20} /> : <MenuIcon size={20} />}

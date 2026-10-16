@@ -96,20 +96,20 @@ export default function AdminCms({
   };
 
   return (
-    <div className="py-8 md:py-14 text-left min-h-[70vh]">
-      <div className="max-w-[1040px] mx-auto px-5 space-y-6">
+    <div className="py-6 sm:py-8 md:py-14 text-left min-h-[70vh]">
+      <div className="max-w-[1040px] mx-auto px-3.5 sm:px-5 space-y-5 sm:space-y-6">
         {/* User Session Bar */}
         {adminUser && (
-          <div className="p-3.5 px-4.5 rounded-2xl bg-[#FFFAF2] border border-[#f1e4da] flex flex-wrap items-center justify-between gap-3 shadow-xs">
+          <div className="p-3 sm:p-3.5 px-3.5 sm:px-4.5 rounded-2xl bg-[#FFFAF2] border border-[#f1e4da] flex flex-wrap items-center justify-between gap-3 shadow-xs">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-[#e46000] text-white flex items-center justify-center font-black text-xs uppercase shadow-xs">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#e46000] text-white flex items-center justify-center font-black text-xs uppercase shadow-xs">
                 {adminUser.username?.slice(0, 2) || 'AD'}
               </div>
               <div className="leading-tight">
-                <div className="text-[11px] text-[#7a5a4c]">Masuk sebagai:</div>
-                <div className="font-extrabold text-sm text-[#3a1409] flex items-center gap-2">
+                <div className="text-[10px] sm:text-[11px] text-[#7a5a4c]">Masuk sebagai:</div>
+                <div className="font-extrabold text-xs sm:text-sm text-[#3a1409] flex items-center gap-1.5 sm:gap-2">
                   <span>{adminUser.name || adminUser.username}</span>
-                  <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-[#e46000]/10 text-[#e46000] border border-[#e46000]/20">
+                  <span className="text-[9px] sm:text-[10px] font-black uppercase px-1.5 sm:px-2 py-0.5 rounded-full bg-[#e46000]/10 text-[#e46000] border border-[#e46000]/20">
                     {adminUser.role || 'Admin'}
                   </span>
                 </div>
@@ -120,27 +120,27 @@ export default function AdminCms({
               <button
                 type="button"
                 onClick={onLogout}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-red-200 bg-white text-red-600 hover:bg-red-50 text-xs font-bold shadow-2xs transition active:scale-95 cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-red-200 bg-white text-red-600 hover:bg-red-50 text-xs font-bold shadow-2xs transition active:scale-95 cursor-pointer ml-auto sm:ml-0"
                 title="Keluar dari Panel Web"
               >
-                <LogOut size={14} />
-                <span>Keluar (Logout)</span>
+                <LogOut size={13} />
+                <span>Keluar</span>
               </button>
             )}
           </div>
         )}
 
         {/* Banner Info Pemisahan Peran Dashboard Kasir vs Web CMS */}
-        <div className="p-4 rounded-2xl bg-[#fff8f2] border border-[#f1e4da] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#e46000]/10 text-[#e46000] flex items-center justify-center shrink-0">
-              <Store size={22} />
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-[#fff8f2] border border-[#f1e4da] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#e46000]/10 text-[#e46000] flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
+              <Store size={20} className="sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h4 className="font-bold text-[#3a1409] text-sm">
+              <h4 className="font-bold text-[#3a1409] text-xs sm:text-sm">
                 Pusat Kontrol Konten & Profil Website
               </h4>
-              <p className="text-xs text-[#7a5a4c] leading-snug">
+              <p className="text-[11px] sm:text-xs text-[#7a5a4c] leading-snug">
                 Kelola artikel gizi, moderasi ulasan testimoni, dan ubah kontak sosial media. Untuk penambahan menu produk & kasir POS dikelola terpusat di <strong>Dashboard Kasir</strong>.
               </p>
             </div>
@@ -148,15 +148,15 @@ export default function AdminCms({
         </div>
 
         {/* Header Title & CTA */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
           <div>
             <div className="inline-block px-3 py-1 rounded-full bg-[#f7b32b]/20 border border-[#f7b32b]/40 text-[#3a1409] text-xs font-bold mb-1">
               Panel Web / CMS Mandiri
             </div>
-            <h1 className="text-3xl md:text-4xl font-extrabold text-[#3a1409]">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#3a1409]">
               Kelola Konten Website
             </h1>
-            <p className="text-sm text-[#7a5a4c] mt-0.5">
+            <p className="text-xs sm:text-sm text-[#7a5a4c] mt-0.5">
               Kelola artikel edukasi, ulasan pembeli, dan pengaturan kontak WhatsApp / Medsos.
             </p>
           </div>
@@ -164,7 +164,7 @@ export default function AdminCms({
           {activeTab === 'articles' && (
             <button
               onClick={handleOpenAddArticle}
-              className="px-5 py-2.5 rounded-full bg-[#e46000] hover:bg-[#c85300] text-white font-bold text-sm shadow-md transition-all flex items-center gap-2 cursor-pointer active:scale-95 shrink-0"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-full bg-[#e46000] hover:bg-[#c85300] text-white font-bold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 shrink-0"
             >
               <Plus size={16} />
               <span>Tambah Artikel</span>
@@ -173,40 +173,40 @@ export default function AdminCms({
         </div>
 
         {/* Navigation Tabs (3 Tabs) */}
-        <div className="flex border-b border-[#f1e4da] gap-2 pt-2">
+        <div className="flex border-b border-[#f1e4da] gap-1 sm:gap-2 pt-2 overflow-x-auto pb-1 scrollbar-none">
           <button
             onClick={() => setActiveTab('articles')}
-            className={`pb-3 px-4 font-bold text-sm border-b-2 flex items-center gap-2 transition-colors cursor-pointer ${
+            className={`pb-2.5 sm:pb-3 px-3 sm:px-4 font-bold text-xs sm:text-sm border-b-2 flex items-center gap-1.5 sm:gap-2 transition-colors cursor-pointer whitespace-nowrap ${
               activeTab === 'articles'
                 ? 'border-[#e46000] text-[#e46000]'
                 : 'border-transparent text-[#7a5a4c] hover:text-[#3a1409]'
             }`}
           >
-            <FileText size={17} />
+            <FileText size={16} />
             <span>Artikel & Berita ({articles.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab('reviews')}
-            className={`pb-3 px-4 font-bold text-sm border-b-2 flex items-center gap-2 transition-colors cursor-pointer ${
+            className={`pb-2.5 sm:pb-3 px-3 sm:px-4 font-bold text-xs sm:text-sm border-b-2 flex items-center gap-1.5 sm:gap-2 transition-colors cursor-pointer whitespace-nowrap ${
               activeTab === 'reviews'
                 ? 'border-[#e46000] text-[#e46000]'
                 : 'border-transparent text-[#7a5a4c] hover:text-[#3a1409]'
             }`}
           >
-            <MessageSquare size={17} />
+            <MessageSquare size={16} />
             <span>Moderasi Ulasan ({reviews.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab('settings')}
-            className={`pb-3 px-4 font-bold text-sm border-b-2 flex items-center gap-2 transition-colors cursor-pointer ${
+            className={`pb-2.5 sm:pb-3 px-3 sm:px-4 font-bold text-xs sm:text-sm border-b-2 flex items-center gap-1.5 sm:gap-2 transition-colors cursor-pointer whitespace-nowrap ${
               activeTab === 'settings'
                 ? 'border-[#e46000] text-[#e46000]'
                 : 'border-transparent text-[#7a5a4c] hover:text-[#3a1409]'
             }`}
           >
-            <Share2 size={17} />
+            <Share2 size={16} />
             <span>Kontak & Video Beranda</span>
           </button>
         </div>

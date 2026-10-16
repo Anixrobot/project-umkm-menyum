@@ -467,31 +467,31 @@ export default function Menu({
   };
 
   return (
-    <div className="py-8 md:py-14 text-left">
-      <div className="max-w-[1040px] mx-auto px-5 space-y-8">
+    <div className="py-6 sm:py-8 md:py-14 text-left">
+      <div className="max-w-[1040px] mx-auto px-3.5 sm:px-5 space-y-6 sm:space-y-8">
         {/* Header */}
         <div className="space-y-2">
           <div className="inline-block px-3.5 py-1 rounded-full bg-[#f7b32b]/20 border border-[#f7b32b]/40 text-[#3a1409] text-xs font-bold">
             Pilihan Kuliner Khas MenYum
           </div>
-          <h1 className="text-4xl md:text-[52px] font-extrabold text-[#3a1409] leading-tight">
+          <h1 className="text-3xl sm:text-4xl md:text-[52px] font-extrabold text-[#3a1409] leading-tight">
             Menu & daftar harga
           </h1>
-          <p className="text-base md:text-lg text-[#7a5a4c]">
+          <p className="text-sm sm:text-base md:text-lg text-[#7a5a4c]">
             Pilih kategori, tambahkan ke keranjang, lalu ambil nomor antrian untuk bayar di kasir.
           </p>
         </div>
 
         {/* Filter Kategori & Search */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-          <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+          <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
             {['Semua', 'Makanan', 'Minuman'].map((cat) => {
               const isActive = selectedCategory === cat;
               return (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-[18px] py-1.5 rounded-full text-sm font-bold transition-all cursor-pointer ${
+                  className={`px-[18px] py-1.5 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
                     isActive
                       ? 'bg-[#e46000] border-2 border-[#e46000] text-white shadow-xs'
                       : 'bg-white border-2 border-[#f1e4da] text-[#3a1409] hover:border-[#f7b32b]'
@@ -513,7 +513,7 @@ export default function Menu({
               placeholder="Cari nasi mentai/minuman..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3.5 py-1.5 text-sm bg-white border-2 border-[#f1e4da] rounded-full focus:outline-none focus:border-[#e46000] text-[#3a1409]"
+              className="w-full pl-9 pr-3.5 py-1.5 text-xs sm:text-sm bg-white border-2 border-[#f1e4da] rounded-full focus:outline-none focus:border-[#e46000] text-[#3a1409]"
             />
           </div>
         </div>
@@ -534,7 +534,7 @@ export default function Menu({
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-5">
             {filteredProducts.map((prod) => {
               const inCartItems = cart.filter(
                 (item) => String(item.productId || item.id) === String(prod.id)
@@ -548,7 +548,7 @@ export default function Menu({
                   className="rounded-[18px] bg-white border-2 border-[#f1e4da] overflow-hidden flex flex-col justify-between shadow-xs hover:border-[#f7b32b] hover:shadow-md transition-all group cursor-pointer"
                 >
                   {/* Gambar Produk */}
-                  <div className="h-[140px] bg-[#fff8f2] relative flex items-center justify-center overflow-hidden">
+                  <div className="h-[110px] xs:h-[130px] sm:h-[140px] bg-[#fff8f2] relative flex items-center justify-center overflow-hidden">
                     <img
                       src={prod.image}
                       alt={prod.name}
@@ -558,31 +558,31 @@ export default function Menu({
 
                     {/* Badge Terlaris */}
                     {prod.isBestseller && (
-                      <span className="bg-[#f7b32b] text-[11px] font-bold text-[#3a1409] px-2.5 py-0.5 rounded-full absolute left-2.5 top-2.5 shadow-xs flex items-center gap-1">
+                      <span className="bg-[#f7b32b] text-[10px] sm:text-[11px] font-bold text-[#3a1409] px-2 sm:px-2.5 py-0.5 rounded-full absolute left-2 sm:left-2.5 top-2 sm:top-2.5 shadow-xs flex items-center gap-1">
                         <Sparkles size={11} /> Terlaris
                       </span>
                     )}
 
                     {qty > 0 && (
-                      <span className="bg-[#e46000] text-white text-xs font-bold px-2 py-0.5 rounded-full absolute right-2.5 top-2.5 shadow-md">
+                      <span className="bg-[#e46000] text-white text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full absolute right-2 sm:right-2.5 top-2 sm:top-2.5 shadow-md">
                         {qty} di keranjang
                       </span>
                     )}
                   </div>
 
                   {/* Konten Bawah */}
-                  <div className="p-4 flex flex-col grow justify-between text-left">
+                  <div className="p-3 sm:p-4 flex flex-col grow justify-between text-left">
                     <div className="space-y-1">
-                      <h3 className="font-bold text-[#3a1409] text-base leading-snug group-hover:text-[#e46000] transition-colors">
+                      <h3 className="font-bold text-[#3a1409] text-xs sm:text-base leading-snug group-hover:text-[#e46000] transition-colors line-clamp-1 sm:line-clamp-none">
                         {prod.name}
                       </h3>
-                      <p className="text-xs text-[#7a5a4c] line-clamp-2 leading-relaxed">
+                      <p className="text-[11px] sm:text-xs text-[#7a5a4c] line-clamp-2 leading-relaxed">
                         {prod.description}
                       </p>
                     </div>
 
-                    <div className="pt-3">
-                      <div className="text-lg font-black text-[#e46000]">
+                    <div className="pt-2 sm:pt-3">
+                      <div className="text-sm sm:text-lg font-black text-[#e46000]">
                         {formatRupiah(prod.price)}
                       </div>
 
@@ -592,9 +592,9 @@ export default function Menu({
                           e.stopPropagation();
                           handleProductClick(prod);
                         }}
-                        className="w-full p-[9px] rounded-full bg-[#e46000] hover:bg-[#c85300] text-white text-sm font-bold shadow-xs hover:shadow transition-all active:scale-95 flex items-center justify-center gap-1.5 mt-2 cursor-pointer"
+                        className="w-full py-2 sm:p-[9px] rounded-full bg-[#e46000] hover:bg-[#c85300] text-white text-xs sm:text-sm font-bold shadow-xs hover:shadow transition-all active:scale-95 flex items-center justify-center gap-1 sm:gap-1.5 mt-2 cursor-pointer"
                       >
-                        <Plus size={16} />
+                        <Plus size={15} />
                         <span>Tambah</span>
                       </button>
                     </div>
@@ -606,9 +606,9 @@ export default function Menu({
         )}
 
         {/* Panel Keranjang & Checkout QRIS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 pt-4 sm:pt-6">
           {/* Kolom Kiri: Card "Pesananmu" */}
-          <div className="rounded-[18px] bg-white border-2 border-[#f1e4da] p-6 shadow-xs flex flex-col justify-between">
+          <div className="rounded-[18px] bg-white border-2 border-[#f1e4da] p-4 sm:p-6 shadow-xs flex flex-col justify-between">
             <div className="space-y-4">
               <div className="flex items-center justify-between border-b border-[#f1e4da] pb-3">
                 <div className="flex items-center gap-2">
@@ -742,7 +742,7 @@ export default function Menu({
               <button
                 disabled={cart.length === 0 || isSubmitting}
                 onClick={handleConfirmOrderClick}
-                className={`w-full py-3.5 rounded-full font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                className={`w-full py-3 sm:py-3.5 rounded-full font-bold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer ${
                   cart.length === 0 || isSubmitting
                     ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
                     : 'bg-[#e46000] hover:bg-[#c85300] text-white active:scale-98 shadow-orange-500/20'
@@ -764,7 +764,7 @@ export default function Menu({
           </div>
 
           {/* Kolom Kanan: Card "Tiket Nomor Antrian" */}
-          <div className="rounded-[18px] bg-white border-2 border-[#f1e4da] p-6 shadow-xs flex flex-col justify-between text-center relative overflow-hidden">
+          <div className="rounded-[18px] bg-white border-2 border-[#f1e4da] p-4 sm:p-6 shadow-xs flex flex-col justify-between text-center relative overflow-hidden">
             <div>
               <div className="flex items-center justify-between border-b border-[#f1e4da] pb-3 text-left">
                 <div className="flex items-center gap-2">
@@ -772,7 +772,7 @@ export default function Menu({
                     <Ticket size={18} />
                   </div>
                   <div>
-                    <h2 className="text-[18.7px] font-bold text-[#3a1409]">
+                    <h2 className="text-[17px] sm:text-[18.7px] font-bold text-[#3a1409]">
                       Tiket Nomor Antrian
                     </h2>
                     <span className="text-[11px] text-[#7a5a4c]">Pay at Cashier MenYum</span>
@@ -788,15 +788,15 @@ export default function Menu({
               {/* Tampilan Tiket Nomor Antrian */}
               <div
                 id="printable-ticket"
-                className="w-full min-h-[250px] rounded-[16px] border-2 border-[#f1e4da] border-dashed flex flex-col items-center justify-center p-5 my-4 bg-gradient-to-b from-[#fff8f2] to-white relative"
+                className="w-full min-h-[250px] rounded-[16px] border-2 border-[#f1e4da] border-dashed flex flex-col items-center justify-center p-3.5 sm:p-5 my-4 bg-gradient-to-b from-[#fff8f2] to-white relative"
               >
                 {!confirmedOrder ? (
                   <div className="text-center space-y-2 p-4">
-                    <div className="w-16 h-16 rounded-2xl bg-[#fff2e5] border border-[#f1e4da] flex items-center justify-center mx-auto text-[#e46000]">
-                      <Ticket size={32} />
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#fff2e5] border border-[#f1e4da] flex items-center justify-center mx-auto text-[#e46000]">
+                      <Ticket size={28} className="sm:w-8 sm:h-8" />
                     </div>
                     <h4 className="font-bold text-[#3a1409] text-sm">Nomor Antrian Belum Terbit</h4>
-                    <p className="text-[12px] text-[#7a5a4c] max-w-[220px] mx-auto leading-relaxed">
+                    <p className="text-[11px] sm:text-[12px] text-[#7a5a4c] max-w-[220px] mx-auto leading-relaxed">
                       Pilih menu dan klik "Konfirmasi Pesanan & Ambil Nomor Antrian" di sebelah kiri untuk mendapatkan tiket.
                     </p>
                   </div>
@@ -820,7 +820,7 @@ export default function Menu({
                       <span className="text-[11px] font-bold tracking-widest text-[#7a5a4c] uppercase block">
                         Nomor Antrian Anda
                       </span>
-                      <div className="text-5xl md:text-6xl font-black text-[#e46000] tracking-wider my-1 drop-shadow-xs">
+                      <div className="text-4xl sm:text-5xl md:text-6xl font-black text-[#e46000] tracking-wider my-1 drop-shadow-xs">
                         {confirmedOrder.queueNumber || 'A-001'}
                       </div>
                       <span className="text-xs font-medium text-[#7a5a4c]">

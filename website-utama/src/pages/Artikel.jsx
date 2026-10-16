@@ -11,17 +11,17 @@ export default function Artikel({ articles = [], selectedArticle, onSelectArticl
   );
 
   return (
-    <div className="py-8 md:py-14 text-left">
-      <div className="max-w-[1040px] mx-auto px-5 space-y-8">
+    <div className="py-6 sm:py-8 md:py-14 text-left">
+      <div className="max-w-[1040px] mx-auto px-4 sm:px-5 space-y-6 sm:space-y-8">
         {/* Header */}
         <div className="space-y-2">
           <div className="inline-block px-3.5 py-1 rounded-full bg-[#f7b32b]/20 border border-[#f7b32b]/40 text-[#3a1409] text-xs font-bold">
             Edukasi Gizi & Info Dapur
           </div>
-          <h1 className="text-4xl md:text-[52px] font-extrabold text-[#3a1409] leading-tight">
+          <h1 className="text-3xl sm:text-4xl md:text-[52px] font-extrabold text-[#3a1409] leading-tight">
             Artikel & berita
           </h1>
-          <p className="text-base md:text-lg text-[#7a5a4c]">
+          <p className="text-sm sm:text-base md:text-lg text-[#7a5a4c]">
             Info gizi dan kabar terbaru dari dapur kami untuk menemani gaya hidup sehatmu.
           </p>
         </div>
@@ -34,7 +34,7 @@ export default function Artikel({ articles = [], selectedArticle, onSelectArticl
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                className={`px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                   isActive
                     ? 'bg-[#e46000] text-white shadow-xs'
                     : 'bg-white border-2 border-[#f1e4da] text-[#7a5a4c] hover:border-[#f7b32b]'
@@ -48,12 +48,12 @@ export default function Artikel({ articles = [], selectedArticle, onSelectArticl
 
         {/* Grid 3 Kolom Kartu Artikel */}
         {filteredArticles.length === 0 ? (
-          <div className="py-14 text-center rounded-2xl bg-[#fff8f2] border-2 border-dashed border-[#f1e4da] p-8 text-[#7a5a4c] space-y-1">
+          <div className="py-10 sm:py-14 text-center rounded-2xl bg-[#fff8f2] border-2 border-dashed border-[#f1e4da] p-6 sm:p-8 text-[#7a5a4c] space-y-1">
             <p className="font-bold text-[#3a1409] text-base">Belum ada artikel yang tersedia</p>
             <p className="text-sm">Silakan pilih kategori lain atau tambahkan artikel baru melalui menu <strong>Panel Web</strong>.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
             {filteredArticles.map((art) => (
               <div
                 key={art.id}
@@ -61,7 +61,7 @@ export default function Artikel({ articles = [], selectedArticle, onSelectArticl
                 className="p-[9px] rounded-[13px] border border-[#f1e4da] bg-white shadow-[0_0_15.3px_rgba(0,0,0,0.10)] hover:-translate-y-1.5 hover:shadow-[0_8px_25px_rgba(0,0,0,0.13)] transition-all cursor-pointer flex flex-col justify-between group"
               >
                 {/* Gambar / Ikon Artikel */}
-                <div className="h-44 rounded-[18px] bg-[#fff8f2] flex items-center justify-center text-[64px] overflow-hidden relative">
+                <div className="h-40 sm:h-44 rounded-[18px] bg-[#fff8f2] flex items-center justify-center text-[64px] overflow-hidden relative">
                   {art.image ? (
                     <img
                       src={art.image}
@@ -84,10 +84,10 @@ export default function Artikel({ articles = [], selectedArticle, onSelectArticl
                       <Clock size={12} />
                       <span>{art.readTime || '3 menit baca'}</span>
                     </div>
-                    <h3 className="text-[20px] md:text-[21px] font-bold text-[#3a1409] group-hover:text-[#e46000] transition-colors leading-snug pt-1">
+                    <h3 className="text-lg sm:text-[20px] md:text-[21px] font-bold text-[#3a1409] group-hover:text-[#e46000] transition-colors leading-snug pt-1">
                       {art.title}
                     </h3>
-                    <p className="text-[14px] text-[#7a5a4c] line-clamp-2 mt-1 leading-relaxed">
+                    <p className="text-xs sm:text-[14px] text-[#7a5a4c] line-clamp-2 mt-1 leading-relaxed">
                       {art.caption}
                     </p>
                   </div>
@@ -105,10 +105,10 @@ export default function Artikel({ articles = [], selectedArticle, onSelectArticl
 
       {/* Modal Baca Artikel Lengkap */}
       {selectedArticle && (
-        <div className="fixed inset-0 z-50 bg-[#3a1409]/70 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-[#3a1409]/70 backdrop-blur-xs flex items-center justify-center p-3.5 sm:p-4">
           <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl border-2 border-[#f1e4da] flex flex-col animate-in zoom-in-95">
             {/* Header Modal */}
-            <div className="p-4 border-b border-[#f1e4da] flex items-center justify-between bg-[#fff8f2] shrink-0">
+            <div className="p-3.5 sm:p-4 border-b border-[#f1e4da] flex items-center justify-between bg-[#fff8f2] shrink-0">
               <span className="text-xs font-bold text-[#e46000] uppercase tracking-wider">
                 {selectedArticle.category} • {selectedArticle.readTime}
               </span>
@@ -121,9 +121,9 @@ export default function Artikel({ articles = [], selectedArticle, onSelectArticl
             </div>
 
             {/* Isi Artikel */}
-            <div className="p-6 overflow-y-auto space-y-4 text-left">
+            <div className="p-4 sm:p-6 overflow-y-auto space-y-3.5 sm:space-y-4 text-left">
               {selectedArticle.image && (
-                <div className="w-full h-56 rounded-xl overflow-hidden bg-[#fff8f2]">
+                <div className="w-full h-44 sm:h-56 rounded-xl overflow-hidden bg-[#fff8f2]">
                   <img
                     src={selectedArticle.image}
                     alt={selectedArticle.title}
@@ -132,7 +132,7 @@ export default function Artikel({ articles = [], selectedArticle, onSelectArticl
                 </div>
               )}
 
-              <h2 className="text-2xl md:text-3xl font-extrabold text-[#3a1409] leading-tight">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#3a1409] leading-tight">
                 {selectedArticle.title}
               </h2>
 

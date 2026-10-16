@@ -12,8 +12,8 @@ export default function Footer({ onNavigate, siteSettings = {} }) {
 
   return (
     <>
-      <footer className="w-full bg-[#54180c] text-[#fff3ea] py-14 mt-20 relative border-t-4 border-[#e46000]">
-        <div className="max-w-[1040px] mx-auto px-5 grid grid-cols-1 md:grid-cols-3 gap-10">
+      <footer className="w-full bg-[#54180c] text-[#fff3ea] py-10 sm:py-14 mt-12 sm:mt-20 relative border-t-4 border-[#e46000]">
+        <div className="max-w-[1040px] mx-auto px-4 sm:px-5 grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10">
           {/* Kolom 1: Brand */}
           <div className="space-y-3">
             <div className="flex items-center gap-2.5">
@@ -153,15 +153,15 @@ export default function Footer({ onNavigate, siteSettings = {} }) {
         href={whatsappUrl}
         target="_blank"
         rel="noreferrer"
-        className="fixed bottom-6 right-6 z-50 px-[18px] py-3 rounded-full bg-[#25d366] text-[#06301a] text-[15px] font-bold shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2.5 group"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 p-3 sm:px-[18px] sm:py-3 rounded-full bg-[#25d366] text-[#06301a] text-sm sm:text-[15px] font-bold shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 group"
         aria-label="Chat WhatsApp MenYum"
       >
-        <span className="relative flex h-3 w-3">
+        <span className="relative flex h-2.5 w-2.5 sm:h-3 sm:w-3">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-3 w-3 bg-[#06301a]"></span>
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-[#06301a]"></span>
         </span>
-        <MessageCircle size={20} className="fill-[#06301a]" />
-        <span>Chat WhatsApp</span>
+        <MessageCircle size={19} className="fill-[#06301a] shrink-0" />
+        <span className="hidden sm:inline">Chat WhatsApp</span>
       </a>
     </>
   );
