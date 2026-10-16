@@ -251,7 +251,7 @@ export default function AdminCms({
                       </div>
 
                       <p className="text-xs text-[#7a5a4c] leading-relaxed italic bg-[#fff8f2]/50 p-2.5 rounded-xl border border-[#f1e4da]/50">
-                        &quot;{rev.comment}&quot;
+                        &quot;{rev.comment || rev.text}&quot;
                       </p>
                     </div>
 

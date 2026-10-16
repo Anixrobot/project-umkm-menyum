@@ -255,25 +255,33 @@ export async function fetchReviewsFromSupabase() {
     name: rev.name,
     role: rev.role || 'Pelanggan MenYum',
     rating: Number(rev.rating || 5),
-    comment: rev.comment,
+    comment: rev.comment || '',
+    text: rev.comment || '',
     isApproved: rev.is_approved,
-    date: new Date(rev.created_at).toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    }),
+    date: rev.created_at
+      ? new Date(rev.created_at).toLocaleDateString('id-ID', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        })
+      : 'Baru saja',
   }));
 }
 
 export async function submitReviewToSupabase(rev) {
+  const commentText = (rev.comment || rev.text || '').trim();
+  if (!commentText) {
+    throw new Error('Komentar ulasan tidak boleh kosong');
+  }
+
   const { data, error } = await supabase
     .from('reviews')
     .insert([
       {
-        name: rev.name,
-        role: rev.role || 'Pelanggan MenYum',
-        rating: rev.rating || 5,
-        comment: rev.comment,
+        name: rev.name.trim(),
+        role: (rev.role || 'Pelanggan MenYum').trim(),
+        rating: Number(rev.rating) || 5,
+        comment: commentText,
         is_approved: true,
       },
     ])
@@ -288,9 +296,10 @@ export async function submitReviewToSupabase(rev) {
   return {
     id: data.id,
     name: data.name,
-    role: data.role,
-    rating: data.rating,
+    role: data.role || 'Pelanggan MenYum',
+    rating: Number(data.rating) || 5,
     comment: data.comment,
+    text: data.comment,
     isApproved: data.is_approved,
     date: 'Baru saja',
   };

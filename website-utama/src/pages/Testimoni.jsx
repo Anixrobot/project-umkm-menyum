@@ -1,33 +1,48 @@
 import { useState } from 'react';
-import { Star, MessageSquarePlus, CheckCircle2 } from 'lucide-react';
+import { Star, MessageSquarePlus, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 
 export default function Testimoni({ reviews = [], onAddReview }) {
   const [name, setName] = useState('');
   const [rating, setRating] = useState('5');
   const [comment, setComment] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedAlert, setSubmittedAlert] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name.trim() || !comment.trim()) return;
+    if (!name.trim() || !comment.trim() || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setErrorMessage('');
 
     const newRev = {
       id: Date.now(),
       name: name.trim(),
+      role: 'Pelanggan MenYum',
+      comment: comment.trim(),
       text: comment.trim(),
-      rating: parseInt(rating) || 5,
+      rating: parseInt(rating, 10) || 5,
       date: 'Baru saja',
     };
 
-    if (onAddReview) {
-      onAddReview(newRev);
+    try {
+      if (onAddReview) {
+        await onAddReview(newRev);
+      }
+      setName('');
+      setComment('');
+      setRating('5');
+      setSubmittedAlert(true);
+      setTimeout(() => setSubmittedAlert(false), 4000);
+    } catch (err) {
+      console.error('Error saat submit ulasan:', err);
+      setErrorMessage(
+        err.message || 'Gagal mengirim ulasan ke database. Silakan coba lagi.'
+      );
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setName('');
-    setComment('');
-    setRating('5');
-    setSubmittedAlert(true);
-    setTimeout(() => setSubmittedAlert(false), 4000);
   };
 
   return (
@@ -69,15 +84,22 @@ export default function Testimoni({ reviews = [], onAddReview }) {
 
                   {/* Review Text */}
                   <p className="text-[#3a1409] text-[15px] font-medium leading-relaxed italic">
-                    "{rev.text}"
+                    &quot;{rev.comment || rev.text}&quot;
                   </p>
                 </div>
 
                 {/* Author & Date */}
                 <div className="pt-3 border-t border-[#f1e4da]/60 flex items-center justify-between mt-3 text-xs">
-                  <span className="font-bold text-[#3a1409] capitalize">
-                    — {rev.name}
-                  </span>
+                  <div>
+                    <span className="font-bold text-[#3a1409] capitalize block">
+                      — {rev.name}
+                    </span>
+                    {rev.role && rev.role !== 'Pelanggan MenYum' && (
+                      <span className="text-[10px] text-[#7a5a4c] block">
+                        {rev.role}
+                      </span>
+                    )}
+                  </div>
                   <span className="text-[#7a5a4c]/80 text-[11px] font-medium">
                     {rev.date || 'Terbaru'}
                   </span>
@@ -106,7 +128,14 @@ export default function Testimoni({ reviews = [], onAddReview }) {
             {submittedAlert && (
               <div className="p-3 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-semibold flex items-center gap-2 animate-in fade-in">
                 <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
-                <span>Terima kasih! Ulasan kamu berhasil ditambahkan.</span>
+                <span>Terima kasih! Ulasan kamu berhasil disimpan ke database.</span>
+              </div>
+            )}
+
+            {errorMessage && (
+              <div className="p-3 bg-rose-50 text-rose-800 border border-rose-200 rounded-xl text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+                <AlertCircle size={16} className="text-rose-600 shrink-0" />
+                <span>{errorMessage}</span>
               </div>
             )}
 
@@ -158,9 +187,17 @@ export default function Testimoni({ reviews = [], onAddReview }) {
 
               <button
                 type="submit"
-                className="w-full py-3 rounded-full bg-[#e46000] hover:bg-[#c85300] text-white text-base font-bold shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer"
+                disabled={isSubmitting}
+                className="w-full py-3 rounded-full bg-[#e46000] hover:bg-[#c85300] text-white text-base font-bold shadow-md hover:shadow-lg transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
               >
-                Kirim ulasan
+                {isSubmitting ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    <span>Menyimpan ulasan...</span>
+                  </>
+                ) : (
+                  <span>Kirim ulasan</span>
+                )}
               </button>
             </form>
           </div>

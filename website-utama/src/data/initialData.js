@@ -84,15 +84,15 @@ export const initialProducts = [
 ];
 
 export const initialReviews = [
-  { id: 1, name: 'king rafi', text: 'Enak banget, harus cobain sihh', rating: 5, date: '1 hari yang lalu' },
-  { id: 2, name: 'reyfan amirul', text: 'Mentainya Uweeenak Poll', rating: 5, date: '2 hari yang lalu' },
-  { id: 3, name: 'ikhsan', text: 'enak der, rekomen sih buat di cobain', rating: 5, date: '3 hari yang lalu' },
-  { id: 4, name: 'akamsi', text: 'ayo cobain enak banget tau', rating: 5, date: '3 hari yang lalu' },
-  { id: 5, name: 'badrul', text: 'ga nyesel sih nyobain ini', rating: 5, date: '4 hari yang lalu' },
-  { id: 6, name: 'epan', text: 'wajib cobain sih', rating: 5, date: '4 hari yang lalu' },
-  { id: 7, name: 'orang priok asli', text: 'enak kali lek', rating: 5, date: '5 hari yang lalu' },
-  { id: 8, name: 'pak ustad', text: 'masyaallah enak nasmen nya', rating: 5, date: '6 hari yang lalu' },
-  { id: 9, name: 'ayup', text: 'enak cuy gass cobain', rating: 5, date: '1 minggu yang lalu' },
+  { id: 1, name: 'king rafi', role: 'Pelanggan MenYum', comment: 'Enak banget, harus cobain sihh', text: 'Enak banget, harus cobain sihh', rating: 5, date: '1 hari yang lalu' },
+  { id: 2, name: 'reyfan amirul', role: 'Pelanggan MenYum', comment: 'Mentainya Uweeenak Poll', text: 'Mentainya Uweeenak Poll', rating: 5, date: '2 hari yang lalu' },
+  { id: 3, name: 'ikhsan', role: 'Pelanggan MenYum', comment: 'enak der, rekomen sih buat di cobain', text: 'enak der, rekomen sih buat di cobain', rating: 5, date: '3 hari yang lalu' },
+  { id: 4, name: 'akamsi', role: 'Pelanggan MenYum', comment: 'ayo cobain enak banget tau', text: 'ayo cobain enak banget tau', rating: 5, date: '3 hari yang lalu' },
+  { id: 5, name: 'badrul', role: 'Pelanggan MenYum', comment: 'ga nyesel sih nyobain ini', text: 'ga nyesel sih nyobain ini', rating: 5, date: '4 hari yang lalu' },
+  { id: 6, name: 'epan', role: 'Pelanggan MenYum', comment: 'wajib cobain sih', text: 'wajib cobain sih', rating: 5, date: '4 hari yang lalu' },
+  { id: 7, name: 'orang priok asli', role: 'Pelanggan MenYum', comment: 'enak kali lek', text: 'enak kali lek', rating: 5, date: '5 hari yang lalu' },
+  { id: 8, name: 'pak ustad', role: 'Pelanggan MenYum', comment: 'masyaallah enak nasmen nya', text: 'masyaallah enak nasmen nya', rating: 5, date: '6 hari yang lalu' },
+  { id: 9, name: 'ayup', role: 'Pelanggan MenYum', comment: 'enak cuy gass cobain', text: 'enak cuy gass cobain', rating: 5, date: '1 minggu yang lalu' },
 ];
 
 export const initialArticles = [

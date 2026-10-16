@@ -222,11 +222,13 @@ export default function App() {
 
   // Review Handlers
   const handleAddReview = async (newReview) => {
-    setReviews((prev) => [newReview, ...prev]);
     try {
-      await submitReviewToSupabase(newReview);
+      const savedReview = await submitReviewToSupabase(newReview);
+      setReviews((prev) => [savedReview, ...prev.filter((r) => r.id !== newReview.id && r.id !== savedReview.id)]);
+      return savedReview;
     } catch (e) {
-      console.warn('Gagal simpan ulasan ke Supabase:', e);
+      console.error('Gagal simpan ulasan ke Supabase:', e);
+      throw e;
     }
   };
 
