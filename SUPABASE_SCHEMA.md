@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS public.reviews (
 );
 
 -- 5. TABEL PENGATURAN KONTEN & KONTAK WEB (BARU - DIKELOLA CMS WEB)
+-- 5. TABEL PENGATURAN KONTEN & KONTAK WEB (BARU - DIKELOLA CMS WEB)
 CREATE TABLE IF NOT EXISTS public.site_settings (
   id TEXT PRIMARY KEY DEFAULT 'general',
   whatsapp_number TEXT NOT NULL DEFAULT '6281234567890',
@@ -76,10 +77,14 @@ CREATE TABLE IF NOT EXISTS public.site_settings (
   tiktok_url TEXT NOT NULL DEFAULT 'https://tiktok.com/@menyum.id',
   address TEXT NOT NULL DEFAULT 'Jl. Raya Jatiwaringin No.2, RT.8/RW.13, Cipinang Melayu, Makasar, Kota Jakarta Timur 13620',
   opening_hours TEXT NOT NULL DEFAULT '09.00 - 17.00 WIB',
+  video_url TEXT DEFAULT '',
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- 6. PASTIKAN KOLOM DI TABEL YANG SUDAH ADA LENGKAP
+ALTER TABLE public.site_settings 
+ADD COLUMN IF NOT EXISTS video_url TEXT DEFAULT '';
+
 ALTER TABLE public.order_items 
 ADD COLUMN IF NOT EXISTS toppings TEXT;
 

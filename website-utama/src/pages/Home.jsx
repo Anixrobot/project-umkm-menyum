@@ -2,9 +2,17 @@ import { useState } from 'react';
 import { Flame, QrCode, Bike, ArrowRight, Play, X, Sparkles } from 'lucide-react';
 import mentaiHero2 from '../assets/beranda/menyum nasi mentai 2.png';
 import mentaiCombo1 from '../assets/beranda/menyum nasi mentai 1.png';
+import { formatVideoEmbedUrl } from '../utils/videoUtils';
 
-export default function Home({ onNavigate, articles = [], onSelectArticle }) {
+export default function Home({
+  onNavigate,
+  articles = [],
+  onSelectArticle,
+  siteSettings = {},
+}) {
   const [videoModalOpen, setVideoModalOpen] = useState(false);
+  const rawVideoUrl = siteSettings.video_url || siteSettings.videoUrl || '';
+  const videoEmbedUrl = formatVideoEmbedUrl(rawVideoUrl);
 
   // Take the first 3 articles for preview
   const previewArticles = articles.slice(0, 3);
@@ -259,25 +267,37 @@ export default function Home({ onNavigate, articles = [], onSelectArticle }) {
               </button>
             </div>
 
-            <div className="p-6 text-center space-y-4">
-              <div className="aspect-video bg-[#3a1409] rounded-xl overflow-hidden flex flex-col items-center justify-center text-white relative">
-                <img
-                  src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1000&q=80"
-                  alt="Torching Mentai"
-                  className="w-full h-full object-cover opacity-60"
-                />
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
-                  <div className="w-16 h-16 rounded-full bg-[#e46000] flex items-center justify-center shadow-lg cursor-pointer hover:scale-110 transition-transform">
-                    <Play size={28} className="fill-white translate-x-0.5" />
-                  </div>
-                  <p className="mt-3 font-bold text-white text-sm">
-                    Simulasi: Proses Torch Saus Mentai Meleleh
-                  </p>
-                  <p className="text-xs text-amber-200 mt-1">
-                    Setiap porsi dibakar langsung dengan api presisi sebelum disajikan
-                  </p>
+            <div className="p-4 md:p-6 text-center space-y-4">
+              {videoEmbedUrl ? (
+                <div className="aspect-video w-full bg-black rounded-xl overflow-hidden shadow-lg border border-[#f1e4da]">
+                  <iframe
+                    src={videoEmbedUrl}
+                    className="w-full h-full border-0"
+                    allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                    allowFullScreen
+                    title="Video Proses Bakar Saus Mentai MenYum"
+                  />
                 </div>
-              </div>
+              ) : (
+                <div className="aspect-video bg-[#3a1409] rounded-xl overflow-hidden flex flex-col items-center justify-center text-white relative">
+                  <img
+                    src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1000&q=80"
+                    alt="Torching Mentai"
+                    className="w-full h-full object-cover opacity-60"
+                  />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
+                    <div className="w-16 h-16 rounded-full bg-[#e46000] flex items-center justify-center shadow-lg">
+                      <Play size={28} className="fill-white translate-x-0.5" />
+                    </div>
+                    <p className="mt-3 font-bold text-white text-sm">
+                      Video Proses Torch Saus Mentai Meleleh
+                    </p>
+                    <p className="text-xs text-amber-200 mt-1">
+                      Link video belum disetel. Masukkan link Google Drive melalui menu Panel Web.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               <p className="text-xs text-[#7a5a4c] max-w-md mx-auto">
                 Ingin merasakan kenikmatan hangatnya secara langsung? Silakan pesan menu favoritmu sekarang.
@@ -288,7 +308,7 @@ export default function Home({ onNavigate, articles = [], onSelectArticle }) {
                   setVideoModalOpen(false);
                   onNavigate('menu');
                 }}
-                className="px-6 py-2.5 bg-[#e46000] hover:bg-[#c85300] text-white font-bold rounded-full text-sm transition"
+                className="px-6 py-2.5 bg-[#e46000] hover:bg-[#c85300] text-white font-bold rounded-full text-sm transition cursor-pointer active:scale-95 shadow-md"
               >
                 Pesan Sekarang
               </button>

@@ -10,7 +10,11 @@ import {
   Store,
   Star,
   X,
+  Video,
+  Info,
+  Play,
 } from 'lucide-react';
+import { formatVideoEmbedUrl } from '../utils/videoUtils';
 
 export default function AdminCms({
   articles = [],
@@ -43,6 +47,7 @@ export default function AdminCms({
       siteSettings.address ||
       'Jl. Raya Jatiwaringin No.2, RT.8/RW.13, Cipinang Melayu, Makasar, Kota Jakarta Timur 13620',
     openingHours: siteSettings.opening_hours || '09.00 - 17.00 WIB',
+    videoUrl: siteSettings.video_url || siteSettings.videoUrl || '',
   });
   const [saveSuccess, setSaveSuccess] = useState(false);
 
@@ -167,7 +172,7 @@ export default function AdminCms({
             }`}
           >
             <Share2 size={17} />
-            <span>Kontak & Medsos</span>
+            <span>Kontak & Video Beranda</span>
           </button>
         </div>
 
@@ -272,7 +277,7 @@ export default function AdminCms({
           </div>
         )}
 
-        {/* TAB 3: PENGATURAN KONTAK & MEDSOS */}
+        {/* TAB 3: PENGATURAN KONTAK & MEDSOS & VIDEO BERANDA */}
         {activeTab === 'settings' && (
           <form
             onSubmit={handleSaveSettings}
@@ -280,17 +285,17 @@ export default function AdminCms({
           >
             <div>
               <h3 className="font-bold text-lg text-[#3a1409]">
-                Pengaturan Kontak WhatsApp & Media Sosial
+                Pengaturan Kontak & Video Beranda
               </h3>
               <p className="text-xs text-[#7a5a4c] mt-0.5">
-                Informasi di bawah ini otomatis tampil pada Footer dan Tombol Melayang WhatsApp di seluruh halaman website.
+                Kelola kontak WhatsApp, media sosial, dan tautan video proses bakar saus mentai untuk halaman Beranda.
               </p>
             </div>
 
             {saveSuccess && (
-              <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2">
+              <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 animate-in fade-in">
                 <CheckCircle2 size={16} className="text-emerald-600" />
-                <span>Pengaturan kontak berhasil disimpan ke database!</span>
+                <span>Pengaturan berhasil disimpan ke database!</span>
               </div>
             )}
 
@@ -355,7 +360,7 @@ export default function AdminCms({
                     setSettingsForm({ ...settingsForm, address: e.target.value })
                   }
                   placeholder="Alamat fisik toko / kampus"
-                  className="w-full px-3.5 py-2 rounded-xl border-2 border-[#f1e4da] bg-white text-sm focus:border-[#e46000] outline-none"
+                  className="w-full px-3.5 py-2 rounded-xl border-2 border-[#f1e4da] bg-white text-sm focus:border-[#e46000] outline-none resize-none"
                 />
               </div>
 
@@ -374,6 +379,66 @@ export default function AdminCms({
                   className="w-full px-3.5 py-2.5 rounded-xl border-2 border-[#f1e4da] bg-white text-sm focus:border-[#e46000] outline-none"
                 />
               </div>
+
+              {/* Input Link Video Beranda (Google Drive / YouTube) */}
+              <div className="pt-4 border-t border-[#f1e4da] space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-[#fff2e5] text-[#e46000] flex items-center justify-center border border-[#f1e4da]">
+                    <Video size={17} />
+                  </div>
+                  <div>
+                    <label className="font-bold text-[#3a1409] block text-xs">
+                      Link Video Beranda (Google Drive / YouTube)
+                    </label>
+                    <span className="text-[11px] text-[#7a5a4c] block">
+                      Video ini otomatis tayang saat pengunjung klik tombol &quot;Lihat Video&quot; di Beranda.
+                    </span>
+                  </div>
+                </div>
+
+                <input
+                  type="url"
+                  value={settingsForm.videoUrl || ''}
+                  onChange={(e) =>
+                    setSettingsForm({ ...settingsForm, videoUrl: e.target.value })
+                  }
+                  placeholder="Contoh: https://drive.google.com/file/d/1Bxi.../view?usp=sharing"
+                  className="w-full px-3.5 py-2.5 rounded-xl border-2 border-[#f1e4da] bg-white text-sm focus:border-[#e46000] outline-none"
+                />
+
+                <div className="p-3 bg-[#fff8f2] rounded-xl border border-[#f1e4da] space-y-1 text-[11px] text-[#7a5a4c]">
+                  <p className="font-bold text-[#3a1409] flex items-center gap-1.5">
+                    <Info size={14} className="text-[#e46000] shrink-0" />
+                    <span>Petunjuk Link Google Drive:</span>
+                  </p>
+                  <p className="leading-relaxed">
+                    1. Buka Google Drive &gt; Klik kanan video &gt; Pilih <strong>Bagikan (Share)</strong>.
+                    <br />
+                    2. Ubah akses umum menjadi <strong>&quot;Siapa saja yang memiliki link&quot; (Anyone with the link)</strong> agar video dapat diputar oleh pengunjung.
+                    <br />
+                    3. Salin tautan dan tempelkan di atas. Sistem otomatis mengonversinya menjadi pemutar video langsung di web.
+                  </p>
+                </div>
+
+                {/* Live Preview Pemutar Video */}
+                {settingsForm.videoUrl && (
+                  <div className="mt-3 p-3.5 bg-white rounded-xl border-2 border-dashed border-[#f1e4da] space-y-2">
+                    <span className="font-bold text-xs text-[#3a1409] flex items-center gap-1.5">
+                      <Play size={14} className="text-[#e46000] fill-[#e46000]" />
+                      <span>Preview Pemutar Video:</span>
+                    </span>
+                    <div className="aspect-video w-full rounded-lg overflow-hidden bg-black shadow-inner">
+                      <iframe
+                        src={formatVideoEmbedUrl(settingsForm.videoUrl)}
+                        className="w-full h-full border-0"
+                        allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                        allowFullScreen
+                        title="Preview Video Beranda"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="pt-2 flex justify-end">
@@ -382,7 +447,7 @@ export default function AdminCms({
                 className="px-6 py-2.5 rounded-full bg-[#e46000] hover:bg-[#c85300] text-white font-bold text-sm shadow-md transition-all flex items-center gap-2 cursor-pointer active:scale-95"
               >
                 <Save size={16} />
-                <span>Simpan Perubahan Kontak</span>
+                <span>Simpan Semua Pengaturan</span>
               </button>
             </div>
           </form>

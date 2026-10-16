@@ -36,6 +36,7 @@ export default function App() {
     address:
       'Jl. Raya Jatiwaringin No.2, RT.8/RW.13, Cipinang Melayu, Kec. Makasar, Kota Jakarta Timur, Daerah Khusus Ibukota Jakarta 13620',
     opening_hours: '09.00 - 17.00 WIB',
+    video_url: '',
   });
 
   const [cart, setCart] = useState(() => {
@@ -275,6 +276,7 @@ export default function App() {
         tiktok_url: newSettings.tiktokUrl,
         address: newSettings.address,
         opening_hours: newSettings.openingHours,
+        video_url: newSettings.videoUrl || '',
       }));
     }
   };
@@ -296,6 +298,7 @@ export default function App() {
           <Home
             onNavigate={setActivePage}
             articles={articles}
+            siteSettings={siteSettings}
             onSelectArticle={(art) => {
               setSelectedArticle(art);
               setActivePage('artikel');
@@ -332,6 +335,7 @@ export default function App() {
 
         {activePage === 'cms' && (
           <AdminCms
+            key={siteSettings.updated_at || siteSettings.video_url || 'admin-cms'}
             articles={articles}
             onAddArticle={handleAddArticle}
             onDeleteArticle={handleDeleteArticle}

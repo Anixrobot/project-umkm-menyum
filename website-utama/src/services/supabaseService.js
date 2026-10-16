@@ -329,29 +329,97 @@ export async function fetchSiteSettingsFromSupabase() {
     throw error;
   }
 
+  if (data) {
+    let fallbackVideo = '';
+    try {
+      fallbackVideo = localStorage.getItem('menyum_video_url') || '';
+    } catch (e) {
+      console.warn('Gagal membaca cache video lokal:', e);
+    }
+
+    return {
+      ...data,
+      video_url: data.video_url || fallbackVideo,
+    };
+  }
+
   return data;
 }
 
 export async function updateSiteSettingsInSupabase(settings) {
-  const { data, error } = await supabase
-    .from('site_settings')
-    .upsert({
-      id: 'general',
-      whatsapp_number: settings.whatsappNumber,
-      instagram_url: settings.instagramUrl,
-      tiktok_url: settings.tiktokUrl,
-      address: settings.address,
-      opening_hours: settings.openingHours,
-      updated_at: new Date().toISOString(),
-    })
-    .select()
-    .single();
+  const basePayload = {
+    id: 'general',
+    whatsapp_number: settings.whatsappNumber,
+    instagram_url: settings.instagramUrl,
+    tiktok_url: settings.tiktokUrl,
+    address: settings.address,
+    opening_hours: settings.openingHours,
+    updated_at: new Date().toISOString(),
+  };
 
-  if (error) {
-    console.error('Error updating site settings in Supabase:', error);
-    throw error;
+  const payloadWithVideo = {
+    ...basePayload,
+    video_url: settings.videoUrl || '',
+  };
+
+  let resultData;
+  let resultError;
+
+  // 1. Coba simpan langsung dengan kolom video_url
+  try {
+    const res = await supabase
+      .from('site_settings')
+      .upsert(payloadWithVideo)
+      .select()
+      .single();
+    resultData = res.data;
+    resultError = res.error;
+  } catch (err) {
+    resultError = err;
   }
 
-  return data;
+  // 2. Fallback jika kolom video_url belum dieksekusi di database Supabase
+  if (
+    resultError &&
+    (resultError.code === 'PGRST204' ||
+      resultError.code === '42703' ||
+      String(resultError.message).includes('video_url'))
+  ) {
+    console.warn(
+      'Kolom video_url belum ada di Supabase. Menyimpan data kontak & mengamankan video_url di cache...'
+    );
+
+    try {
+      localStorage.setItem('menyum_video_url', settings.videoUrl || '');
+    } catch (e) {
+      console.warn('Gagal menyimpan cache video lokal:', e);
+    }
+
+    const retry = await supabase
+      .from('site_settings')
+      .upsert(basePayload)
+      .select()
+      .single();
+
+    if (retry.error) {
+      console.error('Error updating site settings on retry:', retry.error);
+      throw retry.error;
+    }
+    resultData = { ...retry.data, video_url: settings.videoUrl || '' };
+  } else if (resultError) {
+    console.error('Error updating site settings in Supabase:', resultError);
+    throw resultError;
+  }
+
+  // Simpan juga ke cache lokal agar langsung aktif
+  try {
+    if (settings.videoUrl !== undefined) {
+      localStorage.setItem('menyum_video_url', settings.videoUrl || '');
+    }
+  } catch (e) {
+    console.warn('Gagal menyimpan cache video lokal:', e);
+  }
+
+  return resultData;
 }
 
