@@ -11,12 +11,18 @@ export default function Navbar({ activePage, setActivePage, cartCount = 0 }) {
     { id: 'menu', label: 'Menu' },
     { id: 'testimoni', label: 'Testimoni' },
     { id: 'artikel', label: 'Artikel' },
-    { id: 'cms', label: 'Panel Web' },
   ];
 
   const handleNavClick = (id) => {
     setActivePage(id);
     setMobileMenuOpen(false);
+    if (window.location.pathname.includes('/brangkas') || window.location.hash.includes('brangkas')) {
+      try {
+        window.history.pushState(null, '', '/');
+      } catch {
+        // ignore in non-browser
+      }
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 

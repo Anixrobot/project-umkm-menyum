@@ -23,8 +23,18 @@ import {
 } from './services/supabaseService';
 import { initialProducts, initialReviews, initialArticles } from './data/initialData';
 
+const isBrangkasRoute = () => {
+  try {
+    const path = window.location.pathname.toLowerCase().replace(/\/+$/, '');
+    const hash = window.location.hash.toLowerCase().replace(/^#\/?/, '');
+    return path === '/brangkas' || path.endsWith('/brangkas') || hash === 'brangkas';
+  } catch {
+    return false;
+  }
+};
+
 export default function App() {
-  const [activePage, setActivePage] = useState('home');
+  const [activePage, setActivePage] = useState(() => (isBrangkasRoute() ? 'cms' : 'home'));
 
   // Products from Supabase (source of truth is Dashboard Kasir)
   const [products, setProducts] = useState(initialProducts);
@@ -52,12 +62,29 @@ export default function App() {
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [adminUser, setAdminUser] = useState(() => {
     try {
-      const saved = localStorage.getItem('menyum_admin_user');
+      // Menggunakan sessionStorage agar otomatis terhapus saat tab browser ditutup
+      const saved = sessionStorage.getItem('menyum_admin_user');
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
     }
   });
+
+  // Listener URL Routing untuk akses tersembunyi /brangkas
+  useEffect(() => {
+    const checkRoute = () => {
+      if (isBrangkasRoute()) {
+        setActivePage('cms');
+      }
+    };
+
+    window.addEventListener('popstate', checkRoute);
+    window.addEventListener('hashchange', checkRoute);
+    return () => {
+      window.removeEventListener('popstate', checkRoute);
+      window.removeEventListener('hashchange', checkRoute);
+    };
+  }, []);
 
   // 1. Fetch Data dari Supabase saat web pertama kali dibuka
   useEffect(() => {
@@ -292,11 +319,14 @@ export default function App() {
 
   const handleAdminLogout = () => {
     try {
+      sessionStorage.removeItem('menyum_admin_user');
       localStorage.removeItem('menyum_admin_user');
+      window.history.pushState(null, '', '/');
     } catch (e) {
       console.warn('Gagal menghapus sesi login:', e);
     }
     setAdminUser(null);
+    setActivePage('home');
   };
 
   const cartTotalItems = cart.reduce((acc, item) => acc + item.qty, 0);
@@ -355,7 +385,14 @@ export default function App() {
           (!adminUser ? (
             <AdminLogin
               onLoginSuccess={(user) => setAdminUser(user)}
-              onBackToHome={() => setActivePage('home')}
+              onBackToHome={() => {
+                try {
+                  window.history.pushState(null, '', '/');
+                } catch {
+                  // ignore
+                }
+                setActivePage('home');
+              }}
             />
           ) : (
             <AdminCms

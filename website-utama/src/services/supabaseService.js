@@ -470,45 +470,10 @@ export async function loginAdminUser(username, password) {
       error: 'Username atau password salah, atau akun dinonaktifkan.',
     };
   } catch (err) {
-    console.warn('Gagal memverifikasi login via Supabase, memeriksa fallback lokal...', err);
-
-    // Fallback kredensial darurat jika koneksi database mengalami kendala
-    const fallbackAccounts = [
-      {
-        id: 'c67bd55c-8f2e-40a8-a293-b459c0eb9b31',
-        username: 'admin',
-        password: 'menyumepirginpren124',
-        name: 'Owner / Admin MenYum',
-        role: 'admin',
-      },
-      {
-        id: '2a1f2dba-82d6-438d-8697-7a6a4c2efe5a',
-        username: 'kasir',
-        password: 'kasir123',
-        name: 'Kasir Outlet Jatiwaringin',
-        role: 'kasir',
-      },
-    ];
-
-    const matched = fallbackAccounts.find(
-      (acc) => acc.username === cleanUsername && acc.password === cleanPassword
-    );
-
-    if (matched) {
-      return {
-        success: true,
-        user: {
-          id: matched.id,
-          username: matched.username,
-          name: matched.name,
-          role: matched.role,
-        },
-      };
-    }
-
+    console.error('Gagal memverifikasi login via Supabase:', err);
     return {
       success: false,
-      error: 'Username atau password salah, atau koneksi database terputus.',
+      error: 'Gagal terhubung ke database autentikasi.',
     };
   }
 }
