@@ -8,6 +8,7 @@ import {
   Search,
   Ticket,
   Printer,
+  Download,
   Clock,
   AlertCircle,
   RefreshCw,
@@ -121,6 +122,348 @@ export default function Menu({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Unduh Tiket sebagai Gambar PNG (HTML5 Canvas murni, hanya nomor antrian & rincian tiket)
+  const handleDownloadTicketImage = () => {
+    if (!confirmedOrder) return;
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const width = 600;
+    const itemsCount = confirmedOrder.items?.length || 0;
+    const baseHeight = 630;
+    const height = baseHeight + itemsCount * 30;
+
+    canvas.width = width;
+    canvas.height = height;
+
+    // Background Putih
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+
+    // Border Putus-putus Oranye
+    ctx.strokeStyle = '#e46000';
+    ctx.lineWidth = 4;
+    ctx.setLineDash([8, 6]);
+    ctx.strokeRect(16, 16, width - 32, height - 32);
+    ctx.setLineDash([]); // Reset dash
+
+    // Header Background Lembut
+    ctx.fillStyle = '#fff8f2';
+    ctx.fillRect(18, 18, width - 36, 115);
+
+    // Judul Brand MenYum
+    ctx.fillStyle = '#e46000';
+    ctx.font = 'bold 30px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('MENYUM KULINER', width / 2, 60);
+
+    ctx.fillStyle = '#7a5a4c';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.fillText('TIKET NOMOR ANTRIAN • PAY AT CASHIER', width / 2, 86);
+
+    ctx.font = '12px monospace';
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillText(
+      `ID: ${confirmedOrder.id}   •   ${new Date().toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      })}`,
+      width / 2,
+      112
+    );
+
+    // Kotak Nomor Antrian Besar
+    ctx.fillStyle = '#fff2e5';
+    ctx.beginPath();
+    if (ctx.roundRect) {
+      ctx.roundRect(width / 2 - 150, 150, 300, 125, 16);
+    } else {
+      ctx.rect(width / 2 - 150, 150, 300, 125);
+    }
+    ctx.fill();
+    ctx.strokeStyle = '#fed7aa';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = '#7a5a4c';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillText('NOMOR ANTRIAN ANDA', width / 2, 178);
+
+    ctx.fillStyle = '#e46000';
+    ctx.font = '900 60px sans-serif';
+    ctx.fillText(confirmedOrder.queueNumber || 'A-001', width / 2, 245);
+
+    // Atas Nama
+    ctx.fillStyle = '#3a1409';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillText(
+      `Atas Nama: ${confirmedOrder.customerName || '-'}`,
+      width / 2,
+      305
+    );
+
+    // Garis Pemisah
+    ctx.strokeStyle = '#fed7aa';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(36, 328);
+    ctx.lineTo(width - 36, 328);
+    ctx.stroke();
+
+    // Rincian Pesanan
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.fillStyle = '#7a5a4c';
+    ctx.fillText('RINCIAN MENU:', 40, 352);
+
+    ctx.textAlign = 'right';
+    ctx.fillText(`${itemsCount} Menu`, width - 40, 352);
+
+    let currentY = 380;
+    ctx.font = '14px sans-serif';
+    if (confirmedOrder.items && confirmedOrder.items.length > 0) {
+      confirmedOrder.items.forEach((item) => {
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#1e293b';
+        const itemTitle = `${item.qty}x ${item.name}`;
+        ctx.fillText(
+          itemTitle.length > 34 ? itemTitle.substring(0, 34) + '...' : itemTitle,
+          40,
+          currentY
+        );
+
+        if (item.toppings && item.toppings.length > 0) {
+          ctx.font = 'italic 11px sans-serif';
+          ctx.fillStyle = '#e46000';
+          ctx.fillText(
+            `+ ${item.toppings.map((t) => t.name).join(', ')}`,
+            55,
+            currentY + 14
+          );
+          ctx.font = '14px sans-serif';
+        }
+
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#0f172a';
+        ctx.fillText(formatRupiah(item.price * item.qty), width - 40, currentY);
+
+        currentY += item.toppings && item.toppings.length > 0 ? 36 : 26;
+      });
+    }
+
+    // Garis Pemisah
+    currentY += 8;
+    ctx.strokeStyle = '#fed7aa';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(36, currentY);
+    ctx.lineTo(width - 36, currentY);
+    ctx.stroke();
+
+    // Total Tagihan
+    currentY += 34;
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 15px sans-serif';
+    ctx.fillStyle = '#3a1409';
+    ctx.fillText('Total Tagihan Kasir:', 40, currentY);
+
+    ctx.textAlign = 'right';
+    ctx.font = '900 24px sans-serif';
+    ctx.fillStyle = '#e46000';
+    ctx.fillText(formatRupiah(confirmedOrder.totalPrice), width - 40, currentY);
+
+    // Kotak Petunjuk Kasir
+    currentY += 22;
+    ctx.fillStyle = '#fef3c7';
+    ctx.beginPath();
+    if (ctx.roundRect) {
+      ctx.roundRect(36, currentY, width - 72, 70, 12);
+    } else {
+      ctx.rect(36, currentY, width - 72, 70);
+    }
+    ctx.fill();
+    ctx.strokeStyle = '#fde68a';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.fillStyle = '#92400e';
+    ctx.fillText(
+      'Tunjukkan nomor antrian ini ke meja kasir MenYum',
+      width / 2,
+      currentY + 28
+    );
+
+    ctx.font = '12px sans-serif';
+    ctx.fillStyle = '#b45309';
+    ctx.fillText(
+      'Pembayaran dapat menggunakan Tunai (Cash) atau QRIS',
+      width / 2,
+      currentY + 50
+    );
+
+    // Ucapan Terima Kasih
+    currentY += 92;
+    ctx.font = 'italic 12px sans-serif';
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillText(
+      'Terima kasih telah memesan di MenYum! Selamat menikmati.',
+      width / 2,
+      currentY
+    );
+
+    // Trigger Download Otomatis
+    const link = document.createElement('a');
+    link.download = `Tiket-Antrian-${confirmedOrder.queueNumber || 'MenYum'}.png`;
+    link.href = canvas.toDataURL('image/png');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Cetak Tiket Khusus 1 Halaman (Membuka jendela cetak terisolasi untuk hanya mencetak tiket)
+  const handlePrintTicket = () => {
+    if (!confirmedOrder) return;
+
+    const printWindow = window.open('', '_blank', 'width=450,height=650');
+    if (!printWindow) {
+      window.print();
+      return;
+    }
+
+    const itemsHtml = (confirmedOrder.items || [])
+      .map(
+        (it) => `
+        <div style="display:flex; justify-content:space-between; margin-bottom:5px; color:#334155;">
+          <div>
+            <strong>${it.qty}x</strong> ${it.name}
+            ${
+              it.toppings?.length
+                ? `<span style="font-size:10px; color:#e46000; font-style:italic; margin-left:6px;">(+${it.toppings
+                    .map((t) => t.name)
+                    .join(', ')})</span>`
+                : ''
+            }
+          </div>
+          <div style="font-weight:700; white-space:nowrap;">${formatRupiah(it.price * it.qty)}</div>
+        </div>
+      `
+      )
+      .join('');
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="id">
+        <head>
+          <meta charset="UTF-8">
+          <title>Tiket Antrian - ${confirmedOrder.queueNumber || 'MenYum'}</title>
+          <style>
+            * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+            body { background: #ffffff; display: flex; justify-content: center; align-items: flex-start; padding: 16px; }
+            .ticket-slip {
+              width: 320px;
+              border: 2px dashed #e46000;
+              border-radius: 16px;
+              padding: 20px;
+              background: #fff8f2;
+              text-align: center;
+            }
+            .brand-title { font-size: 20px; font-weight: 900; color: #e46000; letter-spacing: 0.5px; }
+            .brand-subtitle { font-size: 11px; font-weight: 700; color: #7a5a4c; text-transform: uppercase; margin-top: 2px; }
+            .order-meta { font-size: 11px; font-family: monospace; color: #64748b; margin-top: 4px; margin-bottom: 14px; }
+            .queue-card {
+              background: #ffffff;
+              border: 2px solid #fed7aa;
+              border-radius: 14px;
+              padding: 14px 10px;
+              margin-bottom: 14px;
+            }
+            .queue-title { font-size: 10px; font-weight: 800; color: #7a5a4c; letter-spacing: 1px; }
+            .queue-number { font-size: 46px; font-weight: 900; color: #e46000; margin: 4px 0; line-height: 1.1; }
+            .customer-name { font-size: 13px; font-weight: 700; color: #3a1409; }
+            .items-container {
+              background: #ffffff;
+              border: 1px solid #fed7aa;
+              border-radius: 12px;
+              padding: 12px;
+              text-align: left;
+              font-size: 12px;
+              margin-bottom: 14px;
+            }
+            .items-header {
+              display: flex;
+              justify-content: space-between;
+              font-weight: 700;
+              font-size: 11px;
+              color: #7a5a4c;
+              text-transform: uppercase;
+              border-bottom: 1px solid #fed7aa;
+              padding-bottom: 4px;
+              margin-bottom: 8px;
+            }
+            .total-container { margin-bottom: 14px; }
+            .total-label { font-size: 11px; color: #7a5a4c; }
+            .total-amount { font-size: 24px; font-weight: 900; color: #e46000; }
+            .instructions-box {
+              background: #fef3c7;
+              border: 1px solid #fde68a;
+              border-radius: 10px;
+              padding: 10px;
+              font-size: 11px;
+              color: #92400e;
+              line-height: 1.4;
+            }
+            @media print {
+              body { padding: 0; }
+              @page { margin: 6mm; size: auto; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="ticket-slip">
+            <div class="brand-title">MENYUM KULINER</div>
+            <div class="brand-subtitle">Tiket Nomor Antrian</div>
+            <div class="order-meta">ID: ${confirmedOrder.id} • ${new Date().toLocaleDateString('id-ID')}</div>
+            
+            <div class="queue-card">
+              <div class="queue-title">NOMOR ANTRIAN ANDA</div>
+              <div class="queue-number">${confirmedOrder.queueNumber || 'A-001'}</div>
+              <div class="customer-name">Atas Nama: ${confirmedOrder.customerName || '-'}</div>
+            </div>
+
+            <div class="items-container">
+              <div class="items-header">
+                <span>Rincian Menu</span>
+                <span>${confirmedOrder.items?.length || 0} Item</span>
+              </div>
+              ${itemsHtml}
+            </div>
+
+            <div class="total-container">
+              <div class="total-label">Total Tagihan (Bayar di Kasir):</div>
+              <div class="total-amount">${formatRupiah(confirmedOrder.totalPrice)}</div>
+            </div>
+
+            <div class="instructions-box">
+              <strong>Silakan menuju kasir</strong> dan sebutkan nomor antrian Anda untuk pembayaran <strong>Tunai</strong> atau <strong>QRIS</strong>.
+            </div>
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+              window.onafterprint = function() { window.close(); };
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
   return (
@@ -443,7 +786,10 @@ export default function Menu({
               </div>
 
               {/* Tampilan Tiket Nomor Antrian */}
-              <div className="min-h-[250px] rounded-[16px] border-2 border-[#f1e4da] border-dashed flex flex-col items-center justify-center p-5 my-4 bg-gradient-to-b from-[#fff8f2] to-white relative">
+              <div
+                id="printable-ticket"
+                className="w-full min-h-[250px] rounded-[16px] border-2 border-[#f1e4da] border-dashed flex flex-col items-center justify-center p-5 my-4 bg-gradient-to-b from-[#fff8f2] to-white relative"
+              >
                 {!confirmedOrder ? (
                   <div className="text-center space-y-2 p-4">
                     <div className="w-16 h-16 rounded-2xl bg-[#fff2e5] border border-[#f1e4da] flex items-center justify-center mx-auto text-[#e46000]">
@@ -456,6 +802,13 @@ export default function Menu({
                   </div>
                 ) : (
                   <div className="w-full space-y-3.5 py-2 animate-in zoom-in-95">
+                    {/* Header khusus mode Cetak */}
+                    <div className="hidden print:block text-center pb-2 border-b border-[#f1e4da] w-full mb-3">
+                      <h3 className="font-black text-[#e46000] text-xl tracking-wider">MENYUM KULINER</h3>
+                      <p className="text-[11px] text-[#7a5a4c] font-bold">TIKET NOMOR ANTRIAN • PAY AT CASHIER</p>
+                      <p className="text-[10px] font-mono text-slate-500 mt-0.5">Order ID: {confirmedOrder.id} • {new Date().toLocaleDateString('id-ID')}</p>
+                    </div>
+
                     {/* Status Badge */}
                     <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold border border-amber-200">
                       <Clock size={12} className="animate-pulse" />
@@ -528,23 +881,35 @@ export default function Menu({
             {/* Tombol Aksi Bawah */}
             <div className="pt-2">
               {confirmedOrder && (
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <button
-                    onClick={() => window.print()}
-                    className="flex-1 py-2.5 rounded-full bg-white hover:bg-[#fff2e5] border-2 border-[#f1e4da] text-[#3a1409] font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    onClick={handleDownloadTicketImage}
+                    className="flex-1 py-2.5 rounded-xl bg-[#e46000] hover:bg-[#c85300] text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md hover:shadow-orange-600/30 active:scale-95 cursor-pointer"
+                    title="Download Tiket Antrian sebagai Gambar PNG"
+                  >
+                    <Download size={15} />
+                    <span>Unduh Tiket (PNG)</span>
+                  </button>
+
+                  <button
+                    onClick={handlePrintTicket}
+                    className="flex-1 py-2.5 rounded-xl bg-white hover:bg-[#fff2e5] border-2 border-[#f1e4da] text-[#3a1409] font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    title="Cetak Tiket Antrian 1 Halaman"
                   >
                     <Printer size={15} />
                     <span>Cetak Tiket</span>
                   </button>
+
                   <button
                     onClick={() => {
                       setConfirmedOrder(null);
                       setCustomerName('');
                       setOrderNotes('');
                     }}
-                    className="flex-1 py-2.5 rounded-full bg-[#e46000] hover:bg-[#c85300] text-white font-bold text-xs transition-colors shadow-xs active:scale-95 cursor-pointer"
+                    className="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors active:scale-95 cursor-pointer text-center"
+                    title="Buat Pesanan Baru"
                   >
-                    Buat Pesanan Baru
+                    Pesanan Baru
                   </button>
                 </div>
               )}

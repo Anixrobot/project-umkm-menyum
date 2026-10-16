@@ -15,6 +15,7 @@ import {
   QrCode,
   X,
   CreditCard,
+  Sparkles,
 } from 'lucide-react';
 
 export default function Pesanan({
@@ -404,7 +405,7 @@ export default function Pesanan({
       {/* MODAL 1: Input Pembayaran di Kasir (Tunai / QRIS) -> Terima & Proses */}
       {paymentModalOrder && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-6 border border-slate-100 animate-in zoom-in-95">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-6 border border-slate-100 animate-in zoom-in-95 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <div className="w-9 h-9 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-bold">
@@ -489,6 +490,38 @@ export default function Pesanan({
                   </button>
                 </div>
               </div>
+
+              {/* Tampilan Gambar Mockup QRIS atau Info Tunai */}
+              {selectedPaymentMethod === 'QRIS' ? (
+                <div className="flex flex-col items-center p-3.5 border border-dashed border-orange-300 rounded-xl bg-orange-50/50 animate-in fade-in">
+                  <div className="w-36 h-36 bg-white p-2 rounded-xl border border-slate-200 shadow-xs flex items-center justify-center">
+                    {/* QR Code Mockup MenYum */}
+                    <div className="w-full h-full bg-slate-900 rounded-lg flex flex-col items-center justify-center text-white p-2 relative overflow-hidden">
+                      <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:8px_8px]"></div>
+                      <QrCode size={70} className="text-white relative z-10" />
+                      <span className="text-[10px] font-mono tracking-widest text-amber-400 mt-1 font-bold">
+                        QRIS MENYUM
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-xs text-slate-600 mt-2 flex items-center gap-1 font-medium">
+                    <Sparkles size={13} className="text-amber-500 shrink-0" />
+                    Scan via BCA, GoPay, OVO, Dana, ShopeePay
+                  </span>
+                </div>
+              ) : (
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 flex items-center gap-2.5 animate-in fade-in">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                    <Banknote size={18} />
+                  </div>
+                  <div className="text-xs">
+                    <span className="font-bold block text-emerald-950">Terima Uang Tunai di Kasir</span>
+                    <span className="text-[11px] text-emerald-700">
+                      Pelanggan membayar secara langsung di meja kasir.
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="pt-2 flex gap-2">
@@ -712,7 +745,10 @@ export default function Pesanan({
                 </div>
                 <div className="text-right">
                   <span className="text-slate-400 block mb-0.5">Metode Bayar</span>
-                  <span className="font-semibold text-slate-700">
+                  <span className="font-bold text-slate-800 inline-flex items-center gap-1">
+                    {selectedOrder.paymentMethod === 'QRIS' && (
+                      <QrCode size={13} className="text-orange-600" />
+                    )}
                     {selectedOrder.paymentMethod || 'Belum Bayar (Kasir)'}
                   </span>
                 </div>
