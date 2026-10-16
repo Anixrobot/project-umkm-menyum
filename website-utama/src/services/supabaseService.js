@@ -329,24 +329,55 @@ export async function fetchSiteSettingsFromSupabase() {
     throw error;
   }
 
-  if (data) {
-    let fallbackVideo = '';
-    let fallbackAspect = 'portrait';
-    try {
-      fallbackVideo = localStorage.getItem('menyum_video_url') || '';
-      fallbackAspect = localStorage.getItem('menyum_video_aspect') || 'portrait';
-    } catch (e) {
-      console.warn('Gagal membaca cache video lokal:', e);
-    }
+  let videoFromDedicatedTable = '';
+  let aspectFromDedicatedTable = 'portrait';
 
+  // Coba cek juga tabel khusus site_videos jika ada
+  try {
+    const { data: vData } = await supabase
+      .from('site_videos')
+      .select('video_url, video_aspect')
+      .eq('id', 'main_video')
+      .maybeSingle();
+    if (vData?.video_url) {
+      videoFromDedicatedTable = vData.video_url;
+      aspectFromDedicatedTable = vData.video_aspect || 'portrait';
+    }
+  } catch {
+    // Tabel site_videos belum ada, abaikan
+  }
+
+  let fallbackVideo = '';
+  let fallbackAspect = 'portrait';
+  try {
+    fallbackVideo = localStorage.getItem('menyum_video_url') || '';
+    fallbackAspect = localStorage.getItem('menyum_video_aspect') || 'portrait';
+  } catch (e) {
+    console.warn('Gagal membaca cache video lokal:', e);
+  }
+
+  const finalVideoUrl = data?.video_url || videoFromDedicatedTable || fallbackVideo;
+  const finalVideoAspect = data?.video_aspect || aspectFromDedicatedTable || fallbackAspect;
+
+  if (data) {
     return {
       ...data,
-      video_url: data.video_url || fallbackVideo,
-      video_aspect: data.video_aspect || fallbackAspect,
+      video_url: finalVideoUrl,
+      video_aspect: finalVideoAspect,
+      hasDirectColumn: Boolean(data.video_url),
     };
   }
 
-  return data;
+  return {
+    id: 'general',
+    whatsapp_number: '6281234567890',
+    instagram_url: 'https://instagram.com/menyum.id',
+    tiktok_url: 'https://tiktok.com/@menyum.id',
+    address: 'Jl. Raya Jatiwaringin No.2, RT.8/RW.13, Cipinang Melayu, Makasar, Kota Jakarta Timur 13620',
+    opening_hours: '09.00 - 17.00 WIB',
+    video_url: finalVideoUrl,
+    video_aspect: finalVideoAspect,
+  };
 }
 
 export async function updateSiteSettingsInSupabase(settings) {
@@ -363,62 +394,66 @@ export async function updateSiteSettingsInSupabase(settings) {
   const payloadWithVideo = {
     ...basePayload,
     video_url: settings.videoUrl || '',
+    video_aspect: settings.videoAspect || 'portrait',
   };
 
-  let resultData;
-  let resultError;
+  let savedDirectToSupabase = false;
+  let savedToDedicatedTable = false;
+  let resultData = null;
 
-  // 1. Coba simpan langsung dengan kolom video_url
+  // 1. Coba simpan langsung ke tabel site_settings dengan kolom video_url
   try {
     const res = await supabase
       .from('site_settings')
       .upsert(payloadWithVideo)
       .select()
       .single();
-    resultData = res.data;
-    resultError = res.error;
-  } catch (err) {
-    resultError = err;
+
+    if (!res.error && res.data) {
+      savedDirectToSupabase = true;
+      resultData = res.data;
+    }
+  } catch {
+    // Kolom belum ada
   }
 
-  // 2. Fallback jika kolom video_url belum dieksekusi di database Supabase
-  if (
-    resultError &&
-    (resultError.code === 'PGRST204' ||
-      resultError.code === '42703' ||
-      String(resultError.message).includes('video_url'))
-  ) {
-    console.warn(
-      'Kolom video_url belum ada di Supabase. Menyimpan data kontak & mengamankan video_url di cache...'
-    );
-
+  // 2. Jika kolom video_url belum ada di site_settings, simpan kontak dasar
+  if (!savedDirectToSupabase) {
     try {
-      localStorage.setItem('menyum_video_url', settings.videoUrl || '');
+      const baseRes = await supabase
+        .from('site_settings')
+        .upsert(basePayload)
+        .select()
+        .single();
+      if (!baseRes.error && baseRes.data) {
+        resultData = baseRes.data;
+      }
     } catch (e) {
-      console.warn('Gagal menyimpan cache video lokal:', e);
+      console.warn('Gagal menyimpan kontak dasar ke Supabase:', e);
     }
 
-    const retry = await supabase
-      .from('site_settings')
-      .upsert(basePayload)
-      .select()
-      .single();
-
-    if (retry.error) {
-      console.error('Error updating site settings on retry:', retry.error);
-      throw retry.error;
+    // 3. Coba simpan video ke tabel khusus site_videos jika ada
+    try {
+      const vidRes = await supabase
+        .from('site_videos')
+        .upsert({
+          id: 'main_video',
+          title: 'Video Proses Bakar Saus Mentai Khas MenYum',
+          video_url: settings.videoUrl || '',
+          video_aspect: settings.videoAspect || 'portrait',
+          updated_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+      if (!vidRes.error && vidRes.data) {
+        savedToDedicatedTable = true;
+      }
+    } catch {
+      // Tabel site_videos belum ada
     }
-    resultData = {
-      ...retry.data,
-      video_url: settings.videoUrl || '',
-      video_aspect: settings.videoAspect || 'portrait',
-    };
-  } else if (resultError) {
-    console.error('Error updating site settings in Supabase:', resultError);
-    throw resultError;
   }
 
-  // Simpan juga ke cache lokal agar langsung aktif seketika
+  // Simpan ke cache lokal sebagai cadangan
   try {
     if (settings.videoUrl !== undefined) {
       localStorage.setItem('menyum_video_url', settings.videoUrl || '');
@@ -431,9 +466,14 @@ export async function updateSiteSettingsInSupabase(settings) {
     console.warn('Gagal menyimpan cache video lokal:', e);
   }
 
+  const isPersistedInSupabase = savedDirectToSupabase || savedToDedicatedTable;
+
   return {
-    ...resultData,
+    ...(resultData || basePayload),
+    video_url: settings.videoUrl || '',
     video_aspect: settings.videoAspect || 'portrait',
+    isPersistedInSupabase,
+    needsSqlMigration: !isPersistedInSupabase,
   };
 }
 

@@ -83,7 +83,21 @@ CREATE TABLE IF NOT EXISTS public.site_settings (
 
 -- 6. PASTIKAN KOLOM DI TABEL YANG SUDAH ADA LENGKAP
 ALTER TABLE public.site_settings 
-ADD COLUMN IF NOT EXISTS video_url TEXT DEFAULT '';
+ADD COLUMN IF NOT EXISTS video_url TEXT DEFAULT '',
+ADD COLUMN IF NOT EXISTS video_aspect TEXT DEFAULT 'portrait';
+
+-- Opsional: Tabel khusus video beranda jika ingin dipisah
+CREATE TABLE IF NOT EXISTS public.site_videos (
+  id TEXT PRIMARY KEY DEFAULT 'main_video',
+  title TEXT DEFAULT 'Video Proses Bakar Saus Mentai Khas MenYum',
+  video_url TEXT DEFAULT '',
+  video_aspect TEXT DEFAULT 'portrait',
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE public.site_videos ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public read site_videos" ON public.site_videos FOR SELECT USING (true);
+CREATE POLICY "Public write site_videos" ON public.site_videos FOR ALL USING (true);
 
 ALTER TABLE public.order_items 
 ADD COLUMN IF NOT EXISTS toppings TEXT;

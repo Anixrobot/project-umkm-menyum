@@ -38,7 +38,7 @@ export default function Navbar({ activePage, setActivePage, cartCount = 0 }) {
           <img
             src={logoMenyum}
             alt="MenYum Mentai Yummy"
-            className="h-8 sm:h-9 md:h-11 max-w-[130px] sm:max-w-none w-auto object-contain group-hover:scale-105 transition-transform"
+            className="h-9 sm:h-10 md:h-[42px] w-auto object-contain group-hover:scale-105 transition-transform"
           />
         </button>
 

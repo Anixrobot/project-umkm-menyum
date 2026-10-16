@@ -16,6 +16,10 @@ import {
   LogOut,
   Smartphone,
   Maximize2,
+  Database,
+  Copy,
+  Check,
+  AlertCircle,
 } from 'lucide-react';
 import { formatVideoEmbedUrl } from '../utils/videoUtils';
 
@@ -55,7 +59,36 @@ export default function AdminCms({
     videoUrl: siteSettings.video_url || siteSettings.videoUrl || '',
     videoAspect: siteSettings.video_aspect || siteSettings.videoAspect || 'portrait',
   });
-  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveStatus, setSaveStatus] = useState(null); // null | 'success' | 'warning'
+  const [copiedSql, setCopiedSql] = useState(false);
+
+  const sqlMigrationCode = `-- Jalankan di Supabase > SQL Editor > New Query:
+ALTER TABLE public.site_settings 
+ADD COLUMN IF NOT EXISTS video_url TEXT DEFAULT '',
+ADD COLUMN IF NOT EXISTS video_aspect TEXT DEFAULT 'portrait';
+
+-- Opsional: Buat juga tabel khusus video jika ingin terpisah
+CREATE TABLE IF NOT EXISTS public.site_videos (
+  id TEXT PRIMARY KEY DEFAULT 'main_video',
+  title TEXT DEFAULT 'Video Proses Bakar Saus Mentai Khas MenYum',
+  video_url TEXT DEFAULT '',
+  video_aspect TEXT DEFAULT 'portrait',
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE public.site_videos ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public read site_videos" ON public.site_videos FOR SELECT USING (true);
+CREATE POLICY "Public write site_videos" ON public.site_videos FOR ALL USING (true);`;
+
+  const handleCopySql = () => {
+    try {
+      navigator.clipboard.writeText(sqlMigrationCode);
+      setCopiedSql(true);
+      setTimeout(() => setCopiedSql(false), 3000);
+    } catch {
+      // fallback
+    }
+  };
 
   const handleOpenAddArticle = () => {
     setArtForm({
@@ -92,9 +125,13 @@ export default function AdminCms({
   const handleSaveSettings = async (e) => {
     e.preventDefault();
     if (onUpdateSiteSettings) {
-      await onUpdateSiteSettings(settingsForm);
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
+      const result = await onUpdateSiteSettings(settingsForm);
+      if (result?.needsSqlMigration) {
+        setSaveStatus('warning');
+      } else {
+        setSaveStatus('success');
+        setTimeout(() => setSaveStatus(null), 4000);
+      }
     }
   };
 
@@ -330,10 +367,36 @@ export default function AdminCms({
               </p>
             </div>
 
-            {saveSuccess && (
-              <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 animate-in fade-in">
-                <CheckCircle2 size={16} className="text-emerald-600" />
-                <span>Pengaturan berhasil disimpan ke database!</span>
+            {saveStatus === 'success' && (
+              <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold flex items-center gap-2.5 animate-in fade-in shadow-xs">
+                <CheckCircle2 size={18} className="text-emerald-600 shrink-0" />
+                <span>Pengaturan kontak & tautan video berhasil disimpan permanen ke database Supabase! Video kini aktif untuk semua pengunjung di seluruh perangkat.</span>
+              </div>
+            )}
+
+            {saveStatus === 'warning' && (
+              <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 text-xs space-y-2.5 animate-in fade-in shadow-xs">
+                <div className="flex items-start gap-2.5 font-bold">
+                  <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-amber-900">Perhatian: Kolom Video Belum Ada di Database Supabase!</p>
+                    <p className="font-normal text-amber-800 mt-0.5">
+                      Kontak dasar berhasil disimpan, dan link video tersimpan sementara di browser ini. Namun agar video dapat ditonton oleh <strong>teman dan pengunjung di perangkat lain</strong>, Anda perlu menambahkan kolom di database Supabase melalui SQL Editor.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-[#3a1409] text-amber-100 p-3 rounded-lg font-mono text-[11px] relative overflow-x-auto">
+                  <pre className="whitespace-pre-wrap">{sqlMigrationCode}</pre>
+                  <button
+                    type="button"
+                    onClick={handleCopySql}
+                    className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#e46000] hover:bg-[#c85300] text-white font-sans font-bold text-xs cursor-pointer active:scale-95 transition"
+                  >
+                    {copiedSql ? <Check size={14} className="text-white" /> : <Copy size={14} />}
+                    <span>{copiedSql ? 'Berhasil Disalin!' : 'Salin Kode SQL untuk Supabase'}</span>
+                  </button>
+                </div>
               </div>
             )}
 
@@ -420,18 +483,30 @@ export default function AdminCms({
 
               {/* Input Link Video Beranda (Google Drive / YouTube) */}
               <div className="pt-4 border-t border-[#f1e4da] space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-[#fff2e5] text-[#e46000] flex items-center justify-center border border-[#f1e4da]">
-                    <Video size={17} />
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-[#fff2e5] text-[#e46000] flex items-center justify-center border border-[#f1e4da]">
+                      <Video size={17} />
+                    </div>
+                    <div>
+                      <label className="font-bold text-[#3a1409] block text-xs">
+                        Link Video Beranda (Google Drive / YouTube)
+                      </label>
+                      <span className="text-[11px] text-[#7a5a4c] block">
+                        Video ini otomatis tayang saat pengunjung klik tombol &quot;Lihat Video&quot; di Beranda.
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <label className="font-bold text-[#3a1409] block text-xs">
-                      Link Video Beranda (Google Drive / YouTube)
-                    </label>
-                    <span className="text-[11px] text-[#7a5a4c] block">
-                      Video ini otomatis tayang saat pengunjung klik tombol &quot;Lihat Video&quot; di Beranda.
-                    </span>
-                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleCopySql}
+                    className="shrink-0 text-[10px] sm:text-xs font-bold text-[#e46000] hover:text-[#c85300] bg-[#fff2e5] border border-[#e46000]/20 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 cursor-pointer transition active:scale-95"
+                    title="Salin query SQL untuk menambahkan kolom video di Supabase"
+                  >
+                    <Database size={13} />
+                    <span>{copiedSql ? 'SQL Disalin!' : 'Script SQL Supabase'}</span>
+                  </button>
                 </div>
 
                 <input

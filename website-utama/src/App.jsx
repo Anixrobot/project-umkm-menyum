@@ -185,11 +185,28 @@ export default function App() {
       )
       .subscribe();
 
+    const videosChannel = supabase
+      .channel('realtime:web-videos')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'site_videos' },
+        async () => {
+          try {
+            const updated = await fetchSiteSettingsFromSupabase();
+            if (updated) setSiteSettings(updated);
+          } catch (e) {
+            console.error('Error refreshing realtime videos on web:', e);
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(productsChannel);
       supabase.removeChannel(articlesChannel);
       supabase.removeChannel(reviewsChannel);
       supabase.removeChannel(settingsChannel);
+      supabase.removeChannel(videosChannel);
     };
   }, []);
 
@@ -304,17 +321,22 @@ export default function App() {
     try {
       const saved = await updateSiteSettingsInSupabase(newSettings);
       setSiteSettings(saved);
+      return saved;
     } catch (e) {
       console.warn('Gagal update site settings di Supabase:', e);
-      setSiteSettings((prev) => ({
-        ...prev,
+      const fallback = {
+        ...siteSettings,
         whatsapp_number: newSettings.whatsappNumber,
         instagram_url: newSettings.instagramUrl,
         tiktok_url: newSettings.tiktokUrl,
         address: newSettings.address,
         opening_hours: newSettings.openingHours,
         video_url: newSettings.videoUrl || '',
-      }));
+        video_aspect: newSettings.videoAspect || 'portrait',
+        needsSqlMigration: true,
+      };
+      setSiteSettings(fallback);
+      return fallback;
     }
   };
 
