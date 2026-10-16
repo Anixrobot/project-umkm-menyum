@@ -1,5 +1,16 @@
 import { useState } from 'react';
-import { Flame, QrCode, Bike, ArrowRight, Play, X, Sparkles } from 'lucide-react';
+import {
+  Flame,
+  QrCode,
+  Bike,
+  ArrowRight,
+  Play,
+  X,
+  Sparkles,
+  ExternalLink,
+  Smartphone,
+  Maximize2,
+} from 'lucide-react';
 import mentaiHero2 from '../assets/beranda/menyum nasi mentai 2.png';
 import mentaiCombo1 from '../assets/beranda/menyum nasi mentai 1.png';
 import { formatVideoEmbedUrl } from '../utils/videoUtils';
@@ -13,6 +24,26 @@ export default function Home({
   const [videoModalOpen, setVideoModalOpen] = useState(false);
   const rawVideoUrl = siteSettings.video_url || siteSettings.videoUrl || '';
   const videoEmbedUrl = formatVideoEmbedUrl(rawVideoUrl);
+
+  // Mode Tampilan Video: 'portrait' (tegak/HP/9:16) atau 'landscape' (lebar/16:9)
+  const [videoOrientation, setVideoOrientation] = useState(() => {
+    try {
+      const saved = localStorage.getItem('menyum_video_orientation');
+      if (saved) return saved;
+    } catch {
+      // ignore
+    }
+    return siteSettings.video_aspect || siteSettings.videoAspect || 'portrait';
+  });
+
+  const handleToggleOrientation = (mode) => {
+    setVideoOrientation(mode);
+    try {
+      localStorage.setItem('menyum_video_orientation', mode);
+    } catch {
+      // ignore
+    }
+  };
 
   // Take the first 3 articles for preview
   const previewArticles = articles.slice(0, 3);
@@ -250,26 +281,89 @@ export default function Home({
 
       {/* Video Modal Promo */}
       {videoModalOpen && (
-        <div className="fixed inset-0 z-50 bg-[#3a1409]/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl border-2 border-[#f1e4da] animate-in zoom-in-95">
-            <div className="p-4 border-b border-[#f1e4da] flex items-center justify-between bg-[#fff8f2]">
-              <div className="flex items-center gap-2">
-                <Flame className="text-[#e46000]" size={20} />
-                <h3 className="font-bold text-[#3a1409] text-base">
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setVideoModalOpen(false);
+          }}
+          className="fixed inset-0 z-50 bg-[#3a1409]/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200"
+        >
+          <div className="bg-white rounded-2xl w-full max-w-xl md:max-w-2xl overflow-hidden shadow-2xl border-2 border-[#f1e4da] animate-in zoom-in-95 duration-200 my-auto text-left flex flex-col max-h-[94vh]">
+            {/* Header Modal */}
+            <div className="p-3.5 sm:p-4 border-b border-[#f1e4da] flex items-center justify-between bg-[#fff8f2] shrink-0">
+              <div className="flex items-center gap-2 min-w-0 pr-2">
+                <Flame className="text-[#e46000] shrink-0" size={20} />
+                <h3 className="font-bold text-[#3a1409] text-xs sm:text-base leading-snug line-clamp-2 sm:line-clamp-none">
                   Video Proses Bakar Saus Mentai Khas MenYum
                 </h3>
               </div>
-              <button
-                onClick={() => setVideoModalOpen(false)}
-                className="text-[#7a5a4c] hover:text-[#3a1409] p-1 rounded-lg"
-              >
-                <X size={20} />
-              </button>
+              <div className="flex items-center gap-1 shrink-0">
+                {rawVideoUrl && (
+                  <a
+                    href={rawVideoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1.5 rounded-lg text-[#7a5a4c] hover:text-[#e46000] hover:bg-white transition-colors cursor-pointer"
+                    title="Buka Video di Tab Baru / Google Drive"
+                  >
+                    <ExternalLink size={17} />
+                  </a>
+                )}
+                <button
+                  onClick={() => setVideoModalOpen(false)}
+                  className="text-[#7a5a4c] hover:text-[#3a1409] p-1.5 rounded-lg hover:bg-white transition-colors cursor-pointer"
+                  aria-label="Tutup video"
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </div>
 
-            <div className="p-4 md:p-6 text-center space-y-4">
+            {/* Modal Body */}
+            <div className="p-3.5 sm:p-5 text-center space-y-3 sm:space-y-4 overflow-y-auto">
+              {/* Toggle Format Tampilan: Tegak (HP) vs Lebar (16:9) */}
+              {videoEmbedUrl && (
+                <div className="flex items-center justify-between gap-2 px-1 text-xs">
+                  <span className="text-[11px] font-bold text-[#7a5a4c] hidden xs:inline">
+                    Format Tampilan:
+                  </span>
+                  <div className="inline-flex rounded-full bg-[#fff8f2] border border-[#f1e4da] p-0.5 ml-auto">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleOrientation('portrait')}
+                      className={`px-2.5 py-1 rounded-full font-bold text-[11px] transition-all cursor-pointer flex items-center gap-1 ${
+                        videoOrientation === 'portrait'
+                          ? 'bg-[#e46000] text-white shadow-xs'
+                          : 'text-[#7a5a4c] hover:text-[#3a1409]'
+                      }`}
+                    >
+                      <Smartphone size={13} />
+                      <span>Mode Tegak (HP)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleOrientation('landscape')}
+                      className={`px-2.5 py-1 rounded-full font-bold text-[11px] transition-all cursor-pointer flex items-center gap-1 ${
+                        videoOrientation === 'landscape'
+                          ? 'bg-[#e46000] text-white shadow-xs'
+                          : 'text-[#7a5a4c] hover:text-[#3a1409]'
+                      }`}
+                    >
+                      <Maximize2 size={13} />
+                      <span>Mode Lebar (16:9)</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Pemutar Video */}
               {videoEmbedUrl ? (
-                <div className="aspect-video w-full bg-black rounded-xl overflow-hidden shadow-lg border border-[#f1e4da]">
+                <div
+                  className={`w-full bg-black rounded-xl overflow-hidden shadow-lg border border-[#f1e4da] relative flex items-center justify-center transition-all duration-300 ${
+                    videoOrientation === 'portrait'
+                      ? 'max-w-[340px] sm:max-w-[320px] mx-auto h-[52vh] min-h-[340px] max-h-[500px]'
+                      : 'aspect-video'
+                  }`}
+                >
                   <iframe
                     src={videoEmbedUrl}
                     className="w-full h-full border-0"
@@ -299,19 +393,34 @@ export default function Home({
                 </div>
               )}
 
-              <p className="text-xs text-[#7a5a4c] max-w-md mx-auto">
+              <p className="text-xs text-[#7a5a4c] max-w-md mx-auto leading-relaxed">
                 Ingin merasakan kenikmatan hangatnya secara langsung? Silakan pesan menu favoritmu sekarang.
               </p>
 
-              <button
-                onClick={() => {
-                  setVideoModalOpen(false);
-                  onNavigate('menu');
-                }}
-                className="px-6 py-2.5 bg-[#e46000] hover:bg-[#c85300] text-white font-bold rounded-full text-sm transition cursor-pointer active:scale-95 shadow-md"
-              >
-                Pesan Sekarang
-              </button>
+              {/* Tombol Aksi */}
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-1">
+                <button
+                  onClick={() => {
+                    setVideoModalOpen(false);
+                    onNavigate('menu');
+                  }}
+                  className="w-full sm:w-auto px-7 py-2.5 bg-[#e46000] hover:bg-[#c85300] text-white font-bold rounded-full text-xs sm:text-sm transition cursor-pointer active:scale-95 shadow-md shadow-orange-500/20"
+                >
+                  Pesan Sekarang
+                </button>
+
+                {rawVideoUrl && (
+                  <a
+                    href={rawVideoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full sm:w-auto px-5 py-2.5 bg-white hover:bg-[#fff8f2] border-2 border-[#f1e4da] text-[#7a5a4c] hover:text-[#3a1409] font-bold rounded-full text-xs sm:text-sm transition flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+                  >
+                    <ExternalLink size={14} />
+                    <span>Buka di Google Drive</span>
+                  </a>
+                )}
+              </div>
             </div>
           </div>
         </div>

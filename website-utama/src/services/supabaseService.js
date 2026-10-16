@@ -331,8 +331,10 @@ export async function fetchSiteSettingsFromSupabase() {
 
   if (data) {
     let fallbackVideo = '';
+    let fallbackAspect = 'portrait';
     try {
       fallbackVideo = localStorage.getItem('menyum_video_url') || '';
+      fallbackAspect = localStorage.getItem('menyum_video_aspect') || 'portrait';
     } catch (e) {
       console.warn('Gagal membaca cache video lokal:', e);
     }
@@ -340,6 +342,7 @@ export async function fetchSiteSettingsFromSupabase() {
     return {
       ...data,
       video_url: data.video_url || fallbackVideo,
+      video_aspect: data.video_aspect || fallbackAspect,
     };
   }
 
@@ -405,22 +408,33 @@ export async function updateSiteSettingsInSupabase(settings) {
       console.error('Error updating site settings on retry:', retry.error);
       throw retry.error;
     }
-    resultData = { ...retry.data, video_url: settings.videoUrl || '' };
+    resultData = {
+      ...retry.data,
+      video_url: settings.videoUrl || '',
+      video_aspect: settings.videoAspect || 'portrait',
+    };
   } else if (resultError) {
     console.error('Error updating site settings in Supabase:', resultError);
     throw resultError;
   }
 
-  // Simpan juga ke cache lokal agar langsung aktif
+  // Simpan juga ke cache lokal agar langsung aktif seketika
   try {
     if (settings.videoUrl !== undefined) {
       localStorage.setItem('menyum_video_url', settings.videoUrl || '');
+    }
+    if (settings.videoAspect !== undefined) {
+      localStorage.setItem('menyum_video_aspect', settings.videoAspect || 'portrait');
+      localStorage.setItem('menyum_video_orientation', settings.videoAspect || 'portrait');
     }
   } catch (e) {
     console.warn('Gagal menyimpan cache video lokal:', e);
   }
 
-  return resultData;
+  return {
+    ...resultData,
+    video_aspect: settings.videoAspect || 'portrait',
+  };
 }
 
 // ==========================================

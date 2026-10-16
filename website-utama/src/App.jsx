@@ -48,6 +48,7 @@ export default function App() {
       'Jl. Raya Jatiwaringin No.2, RT.8/RW.13, Cipinang Melayu, Kec. Makasar, Kota Jakarta Timur, Daerah Khusus Ibukota Jakarta 13620',
     opening_hours: '09.00 - 17.00 WIB',
     video_url: '',
+    video_aspect: 'portrait',
   });
 
   const [cart, setCart] = useState(() => {

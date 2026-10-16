@@ -14,6 +14,8 @@ import {
   Info,
   Play,
   LogOut,
+  Smartphone,
+  Maximize2,
 } from 'lucide-react';
 import { formatVideoEmbedUrl } from '../utils/videoUtils';
 
@@ -51,6 +53,7 @@ export default function AdminCms({
       'Jl. Raya Jatiwaringin No.2, RT.8/RW.13, Cipinang Melayu, Makasar, Kota Jakarta Timur 13620',
     openingHours: siteSettings.opening_hours || '09.00 - 17.00 WIB',
     videoUrl: siteSettings.video_url || siteSettings.videoUrl || '',
+    videoAspect: siteSettings.video_aspect || siteSettings.videoAspect || 'portrait',
   });
   const [saveSuccess, setSaveSuccess] = useState(false);
 
@@ -455,14 +458,60 @@ export default function AdminCms({
                   </p>
                 </div>
 
+                {/* Pengaturan Format Tampilan Video */}
+                <div className="space-y-1.5 pt-1">
+                  <label className="font-bold text-[#3a1409] block text-xs">
+                    Format Tampilan Video Beranda *
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSettingsForm({ ...settingsForm, videoAspect: 'portrait' })
+                      }
+                      className={`p-2.5 rounded-xl border-2 font-bold flex items-center justify-center gap-2 transition cursor-pointer text-left ${
+                        settingsForm.videoAspect === 'portrait'
+                          ? 'border-[#e46000] bg-[#fff2e5] text-[#e46000]'
+                          : 'border-[#f1e4da] bg-white text-[#7a5a4c] hover:border-[#f7b32b]'
+                      }`}
+                    >
+                      <Smartphone size={16} className="shrink-0" />
+                      <span>Mode Tegak (HP / 9:16) - Rekomendasi</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSettingsForm({ ...settingsForm, videoAspect: 'landscape' })
+                      }
+                      className={`p-2.5 rounded-xl border-2 font-bold flex items-center justify-center gap-2 transition cursor-pointer text-left ${
+                        settingsForm.videoAspect === 'landscape'
+                          ? 'border-[#e46000] bg-[#fff2e5] text-[#e46000]'
+                          : 'border-[#f1e4da] bg-white text-[#7a5a4c] hover:border-[#f7b32b]'
+                      }`}
+                    >
+                      <Maximize2 size={16} className="shrink-0" />
+                      <span>Mode Lebar (16:9 / YouTube)</span>
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-[#7a5a4c] leading-relaxed">
+                    Pilih <strong>Mode Tegak (HP / 9:16)</strong> jika video direkam secara vertikal lewat kamera HP / Instagram Reels agar video tampil tinggi dan tidak mengecil di layar pengunjung.
+                  </p>
+                </div>
+
                 {/* Live Preview Pemutar Video */}
                 {settingsForm.videoUrl && (
                   <div className="mt-3 p-3.5 bg-white rounded-xl border-2 border-dashed border-[#f1e4da] space-y-2">
                     <span className="font-bold text-xs text-[#3a1409] flex items-center gap-1.5">
                       <Play size={14} className="text-[#e46000] fill-[#e46000]" />
-                      <span>Preview Pemutar Video:</span>
+                      <span>Preview Pemutar Video ({settingsForm.videoAspect === 'portrait' ? 'Mode Tegak' : 'Mode Lebar'}):</span>
                     </span>
-                    <div className="aspect-video w-full rounded-lg overflow-hidden bg-black shadow-inner">
+                    <div
+                      className={`w-full rounded-lg overflow-hidden bg-black shadow-inner flex items-center justify-center transition-all ${
+                        settingsForm.videoAspect === 'portrait'
+                          ? 'max-w-[280px] mx-auto h-[440px]'
+                          : 'aspect-video'
+                      }`}
+                    >
                       <iframe
                         src={formatVideoEmbedUrl(settingsForm.videoUrl)}
                         className="w-full h-full border-0"
