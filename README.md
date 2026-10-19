@@ -702,3 +702,4 @@ Kedua aplikasi telah teruji dan teroptimasi penuh untuk dideploy ke **Cloudflare
 <div align="center">
   <sub>Dibuat dengan ❤️ untuk kemajuan UMKM Kuliner Indonesia • <strong>MenYum (Mentai Yummy)</strong> © 2026</sub>
 </div>
+
