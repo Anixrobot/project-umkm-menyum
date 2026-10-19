@@ -13,7 +13,7 @@ dist/
 dist-ssr/
 *.local
 
-# Environment Variables (Sangat Rahasia - Jangan Push ke Git!)
+# Environment Variables 
 .env
 .env.*
 !.env.example
