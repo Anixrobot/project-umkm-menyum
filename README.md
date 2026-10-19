@@ -51,28 +51,28 @@ Proyek ini dibangun dengan konsep **Multi-Package Workspace (Monorepo)** yang te
 ```mermaid
 flowchart TD
     subgraph Klien["Pelanggan (Publik)"]
-        Web["website-utama<br/>(Katalog, Keranjang, QRIS, CMS /brangkas)"]
+        Web["website-utama<br/>Katalog, Keranjang, QRIS, CMS /brangkas"]
     end
 
     subgraph Internal["Operasional UMKM (Privat)"]
-        POS["dashboard-kasir<br/>(Kasir POS, Pesanan Real-time, Stok, Buku Kas)"]
+        POS["dashboard-kasir<br/>Kasir POS, Pesanan Real-time, Stok, Buku Kas"]
     end
 
     subgraph Backend["Cloud Backend-as-a-Service"]
         Supa[("Supabase PostgreSQL Database")]
-        Realtime["Supabase Realtime Engine<br/>(WebSocket Pub/Sub)"]
+        Realtime["Supabase Realtime Engine<br/>WebSocket Pub/Sub"]
     end
 
     subgraph Hosting["Edge Hosting"]
-        CF1["Cloudflare Pages<br/>(project-webmenyum.pages.dev)"]
-        CF2["Cloudflare Pages / Local Server<br/>(Dashboard Kasir POS)"]
+        CF1["Cloudflare Pages<br/>project-webmenyum.pages.dev"]
+        CF2["Cloudflare Pages / Local Server<br/>Dashboard Kasir POS"]
     end
 
-    Web -->|Kirim Pesanan Baru| Supa
-    Web -->|Baca Menu & Setting| Supa
-    Supa -->|Trigger Update| Realtime
-    Realtime -->|Notifikasi Pesanan Masuk (Detik Itu Juga)| POS
-    POS -->|Update Status Pesanan / Edit Stok / Input Kas| Supa
+    Web -->|"Kirim Pesanan Baru"| Supa
+    Web -->|"Baca Menu & Pengaturan"| Supa
+    Supa -->|"Trigger Update"| Realtime
+    Realtime -->|"Notifikasi Pesanan Masuk Realtime"| POS
+    POS -->|"Update Status Pesanan & Stok"| Supa
     Web -.-> CF1
     POS -.-> CF2
 ```
