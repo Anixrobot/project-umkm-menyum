@@ -4,6 +4,7 @@ import Kasir from './pages/Kasir';
 import Pesanan from './pages/Pesanan';
 import Produk from './pages/Produk';
 import BukuKas from './pages/BukuKas';
+import Pengaturan from './pages/Pengaturan';
 import { supabase } from './lib/supabaseClient';
 import {
   fetchProductsFromSupabase,
@@ -19,6 +20,7 @@ import {
   addCashFlowToSupabase,
   deleteCashFlowFromSupabase,
   clearAllCashFlowInSupabase,
+  fetchQrisImageFromSupabase,
 } from './services/supabaseService';
 import {
   initialProducts,
@@ -31,16 +33,18 @@ export default function App() {
   const [products, setProducts] = useState(initialProducts);
   const [orders, setOrders] = useState(initialOrders);
   const [cashFlow, setCashFlow] = useState(initialCashFlow);
+  const [qrisImageUrl, setQrisImageUrl] = useState('');
   const [isDbConnected, setIsDbConnected] = useState(false);
 
   // 1. Fetch data dari Supabase saat aplikasi pertama kali dimuat
   useEffect(() => {
     async function loadInitialData() {
       try {
-        const [dbProducts, dbOrders, dbCashFlow] = await Promise.all([
+        const [dbProducts, dbOrders, dbCashFlow, dbQrisUrl] = await Promise.all([
           fetchProductsFromSupabase(),
           fetchOrdersFromSupabase(),
           fetchCashFlowFromSupabase(),
+          fetchQrisImageFromSupabase(),
         ]);
 
         if (Array.isArray(dbProducts)) {
@@ -52,6 +56,9 @@ export default function App() {
         if (Array.isArray(dbCashFlow)) {
           setCashFlow(dbCashFlow);
         }
+        if (dbQrisUrl) {
+          setQrisImageUrl(dbQrisUrl);
+        }
 
         setIsDbConnected(true);
       } catch (err) {
@@ -62,14 +69,13 @@ export default function App() {
 
     loadInitialData();
 
-    // 2. Real-time Subscription untuk Pesanan Masuk (Delay 2 detik sesuai permintaan)
+    // 2. Real-time Subscription untuk Pesanan Masuk (Delay 2 detik)
     const ordersChannel = supabase
       .channel('realtime:orders')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'orders' },
         () => {
-          // Delay 2 detik sebelum sinkronisasi pesanan masuk
           setTimeout(async () => {
             try {
               const updatedOrders = await fetchOrdersFromSupabase();
@@ -82,7 +88,7 @@ export default function App() {
       )
       .subscribe();
 
-    // 3. Real-time Subscription untuk Sinkronisasi Produk
+    // 3. Real-time Subscription untuk Sinkronisasi Produk & Stok
     const productsChannel = supabase
       .channel('realtime:products')
       .on(
@@ -108,9 +114,29 @@ export default function App() {
   // Hitung berapa pesanan website yang masih Pending
   const pendingOrdersCount = orders.filter((o) => o.status === 'Pending').length;
 
-  // 1. Aksi Selesai Transaksi Kasir POS
+  // 1. Aksi Selesai Transaksi Kasir POS (Logika Pengurangan Stok Otomatis + Buku Kas + Struk)
   const handleCompletePosTransaction = async (receipt) => {
-    // Optimistic UI update
+    // A. Optimistic Update Stok Produk di State Kasir
+    if (Array.isArray(receipt.items)) {
+      setProducts((prevProducts) =>
+        prevProducts.map((p) => {
+          const matchItem = receipt.items.find(
+            (it) => it.id === p.id || it.name === p.name
+          );
+          if (matchItem) {
+            const currentStock = Number(p.stock) || 0;
+            const deductQty = Number(matchItem.qty) || 1;
+            return {
+              ...p,
+              stock: Math.max(0, currentStock - deductQty),
+            };
+          }
+          return p;
+        })
+      );
+    }
+
+    // B. Optimistic Update Buku Kas & Orders
     const newCashFlowEntry = {
       id: `CF-${Date.now().toString().slice(-4)}`,
       date: new Date().toLocaleDateString('id-ID', {
@@ -126,6 +152,11 @@ export default function App() {
       amount: receipt.total,
     };
 
+    const notesSummary =
+      receipt.paymentMethod === 'Tunai'
+        ? `${receipt.orderType} | Tunai: Rp ${Number(receipt.cashGiven || receipt.total).toLocaleString('id-ID')} | Kembali: Rp ${Number(receipt.change || 0).toLocaleString('id-ID')} | Kasir: ${receipt.cashierName || 'Kasir 01'}`
+        : `${receipt.orderType} | Kasir: ${receipt.cashierName || 'Kasir 01'}`;
+
     const newOrderRecord = {
       id: receipt.orderId,
       customerName: receipt.customerName,
@@ -138,13 +169,16 @@ export default function App() {
       status: 'Selesai',
       createdAt: `Baru saja (${receipt.time})`,
       paymentMethod: receipt.paymentMethod,
-      notes: receipt.orderType,
+      cashGiven: receipt.cashGiven,
+      change: receipt.change,
+      cashierName: receipt.cashierName,
+      notes: notesSummary,
     };
 
     setCashFlow((prev) => [newCashFlowEntry, ...prev]);
     setOrders((prev) => [newOrderRecord, ...prev]);
 
-    // Simpan ke Supabase jika terhubung
+    // C. Simpan ke Supabase (Orders, Order Items, Cash Flow, dan Pemotongan Stok Produk)
     try {
       await processPosTransactionInSupabase(receipt);
     } catch (err) {
@@ -159,7 +193,8 @@ export default function App() {
         if (ord.id === orderId) {
           const updatedMethod = paymentMethod || ord.paymentMethod;
           if (newStatus === 'Selesai' && ord.status !== 'Selesai') {
-            const queuePrefix = ord.queueNumber && ord.queueNumber !== '-' ? `${ord.queueNumber} / ` : '';
+            const queuePrefix =
+              ord.queueNumber && ord.queueNumber !== '-' ? `${ord.queueNumber} / ` : '';
             const autoCashFlow = {
               id: `CF-${Date.now().toString().slice(-4)}`,
               date: new Date().toLocaleDateString('id-ID', {
@@ -199,7 +234,7 @@ export default function App() {
     }
   };
 
-  // 3. Aksi Update / Edit Item Pesanan Masuk (Kondisi jika ada ubah pesanan di depan kasir)
+  // 3. Aksi Update / Edit Item Pesanan Masuk
   const handleUpdateOrderItems = async (orderId, updatedItems, newTotalPrice, newNotes) => {
     const target = orders.find((o) => o.id === orderId);
 
@@ -240,12 +275,11 @@ export default function App() {
     }
   };
 
-  // 4. Aksi CRUD Produk
+  // 5. Aksi CRUD Produk
   const handleAddProduct = async (newProduct) => {
     setProducts((prev) => [newProduct, ...prev]);
     try {
       const saved = await addProductToSupabase(newProduct);
-      // Update ID dari DB jika ada
       setProducts((prev) =>
         prev.map((p) => (p.name === newProduct.name ? saved : p))
       );
@@ -274,7 +308,7 @@ export default function App() {
     }
   };
 
-  // 5. Aksi Buku Kas (Tambah, Hapus Satuan, Hapus Semua)
+  // 6. Aksi Buku Kas
   const handleAddCashFlow = async (entry) => {
     setCashFlow((prev) => [entry, ...prev]);
     try {
@@ -321,6 +355,7 @@ export default function App() {
           <Kasir
             products={products}
             onCompleteTransaction={handleCompletePosTransaction}
+            qrisImageUrl={qrisImageUrl}
           />
         )}
 
@@ -331,6 +366,7 @@ export default function App() {
             onUpdateStatus={handleUpdateOrderStatus}
             onUpdateItems={handleUpdateOrderItems}
             onDeleteOrder={handleDeleteOrder}
+            qrisImageUrl={qrisImageUrl}
           />
         )}
 
@@ -349,6 +385,13 @@ export default function App() {
             onAddCashFlow={handleAddCashFlow}
             onDeleteCashFlow={handleDeleteCashFlow}
             onClearCashFlow={handleClearAllCashFlow}
+          />
+        )}
+
+        {activeTab === 'pengaturan' && (
+          <Pengaturan
+            qrisImageUrl={qrisImageUrl}
+            onUpdateQrisImage={setQrisImageUrl}
           />
         )}
       </main>

@@ -1,7 +1,7 @@
 import { supabase } from '../lib/supabaseClient';
 
 // ==========================================
-// 1. MANAJEMEN PRODUK & BAHAN BAKU (HPP)
+// 1. MANAJEMEN PRODUK & MODAL / HPP
 // ==========================================
 
 export async function fetchProductsFromSupabase() {
@@ -22,7 +22,7 @@ export async function fetchProductsFromSupabase() {
     category: item.category,
     price: Number(item.price),
     capitalCost: Number(item.capital_cost || 0),
-    materialCost: Number(item.material_cost || 0),
+    materialCost: 0,
     stock: Number(item.stock || 0),
     image: item.image_url || 'https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?auto=format&fit=crop&w=300&q=80',
     isActive: item.is_active,
@@ -35,7 +35,7 @@ export async function addProductToSupabase(product) {
     category: product.category,
     price: product.price,
     capital_cost: product.capitalCost,
-    material_cost: product.materialCost,
+    material_cost: 0,
     stock: product.stock,
     image_url: product.image,
     is_active: true,
@@ -58,7 +58,7 @@ export async function addProductToSupabase(product) {
     category: data.category,
     price: Number(data.price),
     capitalCost: Number(data.capital_cost || 0),
-    materialCost: Number(data.material_cost || 0),
+    materialCost: 0,
     stock: Number(data.stock || 0),
     image: data.image_url,
     isActive: data.is_active,
@@ -71,7 +71,7 @@ export async function updateProductInSupabase(product) {
     category: product.category,
     price: product.price,
     capital_cost: product.capitalCost,
-    material_cost: product.materialCost,
+    material_cost: 0,
     stock: product.stock,
     image_url: product.image,
   };
@@ -94,11 +94,75 @@ export async function updateProductInSupabase(product) {
     category: data.category,
     price: Number(data.price),
     capitalCost: Number(data.capital_cost || 0),
-    materialCost: Number(data.material_cost || 0),
+    materialCost: 0,
     stock: Number(data.stock || 0),
     image: data.image_url,
     isActive: data.is_active,
   };
+}
+
+// Pengurangan stok otomatis saat transaksi berhasil
+export async function decreaseProductStockInSupabase(items) {
+  if (!Array.isArray(items) || items.length === 0) return;
+
+  for (const item of items) {
+    try {
+      let productQuery = supabase.from('products').select('id, name, stock');
+      if (item.id && typeof item.id === 'number') {
+        productQuery = productQuery.eq('id', item.id);
+      } else {
+        productQuery = productQuery.eq('name', item.name);
+      }
+
+      const { data: currentProduct, error: fetchErr } = await productQuery.maybeSingle();
+      if (fetchErr || !currentProduct) {
+        console.warn(`Produk untuk pemotongan stok tidak ditemukan: ${item.name}`, fetchErr);
+        continue;
+      }
+
+      const currentStock = Number(currentProduct.stock) || 0;
+      const qtyToDeduct = Number(item.qty) || 1;
+      const newStock = Math.max(0, currentStock - qtyToDeduct);
+
+      const { error: updateErr } = await supabase
+        .from('products')
+        .update({ stock: newStock })
+        .eq('id', currentProduct.id);
+
+      if (updateErr) {
+        console.error(`Gagal update stok di Supabase untuk ${item.name}:`, updateErr);
+      }
+    } catch (e) {
+      console.warn(`Exception saat potong stok untuk ${item.name}:`, e);
+    }
+  }
+}
+
+// Upload file gambar ke Supabase Storage (bucket: products / settings)
+export async function uploadImageToSupabaseStorage(bucket, file, pathPrefix = 'catalog') {
+  if (!file) return null;
+
+  const fileExt = file.name.split('.').pop() || 'png';
+  const cleanFileName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+  const filePath = `${pathPrefix}/${cleanFileName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(bucket)
+    .upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: true,
+    });
+
+  if (uploadError) {
+    console.error(`Error uploading image to Supabase Storage (${bucket}):`, uploadError);
+    throw uploadError;
+  }
+
+  const { data } = supabase.storage
+    .from(bucket)
+    .getPublicUrl(filePath);
+
+  return data.publicUrl;
 }
 
 export async function deleteProductFromSupabase(productId) {
@@ -273,6 +337,10 @@ export async function deleteOrderFromSupabase(orderIdOrCode) {
 // ==========================================
 
 export async function processPosTransactionInSupabase(receipt) {
+  const notesText = receipt.paymentMethod === 'Tunai'
+    ? `Kasir POS (${receipt.orderType || 'Dine In'}) | Tunai: Rp ${Number(receipt.cashGiven || receipt.total).toLocaleString('id-ID')} | Kembali: Rp ${Number(receipt.change || 0).toLocaleString('id-ID')} | Kasir: ${receipt.cashierName || 'Kasir 01'}`
+    : `Kasir POS (${receipt.orderType || 'Dine In'}) | Kasir: ${receipt.cashierName || 'Kasir 01'}`;
+
   // 1. Simpan Header Pesanan ke tabel orders
   const { data: orderData, error: orderError } = await supabase
     .from('orders')
@@ -285,7 +353,7 @@ export async function processPosTransactionInSupabase(receipt) {
         payment_method: receipt.paymentMethod,
         total_price: receipt.total,
         status: 'Selesai',
-        notes: `Kasir POS (${receipt.orderType})`,
+        notes: notesText,
       },
     ])
     .select()
@@ -316,7 +384,14 @@ export async function processPosTransactionInSupabase(receipt) {
     }
   }
 
-  // 3. Catat Otomatis ke Buku Kas
+  // 3. Potong stok otomatis di database Supabase
+  try {
+    await decreaseProductStockInSupabase(receipt.items);
+  } catch (stockErr) {
+    console.warn('Warning decreasing product stock:', stockErr);
+  }
+
+  // 4. Catat Otomatis ke Buku Kas
   const { data: cashData, error: cashError } = await supabase
     .from('cash_flow')
     .insert([
@@ -430,4 +505,67 @@ export async function clearAllCashFlowInSupabase() {
     throw error;
   }
 }
+
+// ==========================================
+// 5. PENGATURAN QRIS TOKO DINAMIS
+// ==========================================
+
+export async function fetchQrisImageFromSupabase() {
+  let dbUrl = '';
+  try {
+    const { data, error } = await supabase
+      .from('site_settings')
+      .select('qris_image_url')
+      .eq('id', 'general')
+      .maybeSingle();
+
+    if (!error && data?.qris_image_url) {
+      dbUrl = data.qris_image_url;
+    }
+  } catch (err) {
+    console.warn('Gagal ambil qris_image_url dari Supabase:', err);
+  }
+
+  let localUrl = '';
+  try {
+    localUrl = localStorage.getItem('menyum_qris_image_url') || '';
+  } catch (e) {
+    console.warn('Gagal membaca localStorage QRIS:', e);
+  }
+
+  return dbUrl || localUrl || '';
+}
+
+export async function updateQrisImageInSupabase(qrisUrl) {
+  // 1. Simpan ke localStorage terlebih dahulu sebagai fail-safe
+  try {
+    localStorage.setItem('menyum_qris_image_url', qrisUrl);
+  } catch (e) {
+    console.warn('Gagal simpan QRIS ke localStorage:', e);
+  }
+
+  // 2. Simpan ke database site_settings
+  try {
+    const { data, error } = await supabase
+      .from('site_settings')
+      .upsert(
+        {
+          id: 'general',
+          qris_image_url: qrisUrl,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'id' }
+      )
+      .select()
+      .maybeSingle();
+
+    if (error) {
+      console.warn('Peringatan saat update qris_image_url di site_settings:', error);
+    }
+    return data;
+  } catch (err) {
+    console.warn('Exception saat update QRIS di Supabase:', err);
+  }
+}
+
 

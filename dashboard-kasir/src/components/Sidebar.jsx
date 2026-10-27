@@ -3,6 +3,7 @@ import {
   ClipboardList,
   Package,
   Wallet,
+  Settings,
   UserCheck,
   ChevronRight,
 } from 'lucide-react';
@@ -41,6 +42,13 @@ export default function Sidebar({
       icon: Wallet,
       badge: null,
       desc: 'Arus Kas & Laba Bersih',
+    },
+    {
+      id: 'pengaturan',
+      label: 'Pengaturan',
+      icon: Settings,
+      badge: null,
+      desc: 'Upload QRIS Toko',
     },
   ];
 
@@ -105,7 +113,7 @@ export default function Sidebar({
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl font-medium text-sm transition-all duration-200 group text-left ${
+              className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl font-medium text-sm transition-all duration-200 group text-left cursor-pointer ${
                 isActive
                   ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-lg shadow-orange-600/30'
                   : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
@@ -164,4 +172,3 @@ export default function Sidebar({
     </aside>
   );
 }
-

@@ -16,6 +16,8 @@ import {
   X,
   CreditCard,
   Sparkles,
+  UserCheck,
+  Printer,
 } from 'lucide-react';
 
 export default function Pesanan({
@@ -24,6 +26,7 @@ export default function Pesanan({
   onUpdateStatus,
   onUpdateItems,
   onDeleteOrder,
+  qrisImageUrl,
 }) {
   const [activeFilter, setActiveFilter] = useState('Semua');
   const [searchQuery, setSearchQuery] = useState('');
@@ -494,15 +497,22 @@ export default function Pesanan({
               {/* Tampilan Gambar Mockup QRIS atau Info Tunai */}
               {selectedPaymentMethod === 'QRIS' ? (
                 <div className="flex flex-col items-center p-3.5 border border-dashed border-orange-300 rounded-xl bg-orange-50/50 animate-in fade-in">
-                  <div className="w-36 h-36 bg-white p-2 rounded-xl border border-slate-200 shadow-xs flex items-center justify-center">
-                    {/* QR Code Mockup MenYum */}
-                    <div className="w-full h-full bg-slate-900 rounded-lg flex flex-col items-center justify-center text-white p-2 relative overflow-hidden">
-                      <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:8px_8px]"></div>
-                      <QrCode size={70} className="text-white relative z-10" />
-                      <span className="text-[10px] font-mono tracking-widest text-amber-400 mt-1 font-bold">
-                        QRIS MENYUM
-                      </span>
-                    </div>
+                  <div className="w-40 h-40 bg-white p-2.5 rounded-xl border border-slate-200 shadow-xs flex items-center justify-center overflow-hidden">
+                    {qrisImageUrl ? (
+                      <img
+                        src={qrisImageUrl}
+                        alt="QRIS Toko MenYum"
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-slate-900 rounded-lg flex flex-col items-center justify-center text-white p-2 relative overflow-hidden">
+                        <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:8px_8px]"></div>
+                        <QrCode size={70} className="text-white relative z-10" />
+                        <span className="text-[10px] font-mono tracking-widest text-amber-400 mt-1 font-bold">
+                          QRIS MENYUM
+                        </span>
+                      </div>
+                    )}
                   </div>
                   <span className="text-xs text-slate-600 mt-2 flex items-center gap-1 font-medium">
                     <Sparkles size={13} className="text-amber-500 shrink-0" />
@@ -714,107 +724,246 @@ export default function Pesanan({
         </div>
       )}
 
-      {/* MODAL 3: Order Detail Modal */}
-      {selectedOrder && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-6 border border-slate-100 animate-in zoom-in-95">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-slate-800 text-base">
-                    Rincian {selectedOrder.id}
-                  </h3>
-                  {selectedOrder.queueNumber && selectedOrder.queueNumber !== '-' && (
-                    <span className="text-xs font-black bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full border border-orange-200">
-                      {selectedOrder.queueNumber}
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-slate-500">{selectedOrder.createdAt}</p>
-              </div>
-              <div>{getStatusBadge(selectedOrder.status)}</div>
-            </div>
+      {/* MODAL 3: Order Detail Modal / Drawer (Tugas B: Detail Lengkap Transaksi) */}
+      {selectedOrder && (() => {
+        // Ekstraksi info Kasir & Uang Kembalian
+        let cashierName = selectedOrder.cashierName || 'Kasir 01 - Shift Siang';
+        let cashGiven = selectedOrder.cashGiven || null;
+        let change = selectedOrder.change !== undefined ? selectedOrder.change : null;
 
-            <div className="py-4 space-y-3 text-xs">
-              <div className="flex justify-between items-center">
+        if (selectedOrder.notes && typeof selectedOrder.notes === 'string') {
+          const kasirMatch = selectedOrder.notes.match(/Kasir:\s*([^|]+)/i);
+          if (kasirMatch) {
+            cashierName = kasirMatch[1].trim();
+          }
+          const cashMatch = selectedOrder.notes.match(/Tunai:\s*(?:Rp\s*)?([0-9.,]+)/i);
+          if (cashMatch && !cashGiven) {
+            cashGiven = Number(cashMatch[1].replace(/[.,]/g, '')) || null;
+          }
+          const changeMatch = selectedOrder.notes.match(/Kembali:\s*(?:Rp\s*)?([0-9.,]+)/i);
+          if (changeMatch && change === null) {
+            change = Number(changeMatch[1].replace(/[.,]/g, '')) || 0;
+          }
+        }
+
+        if (selectedOrder.paymentMethod === 'Tunai' && cashGiven === null) {
+          cashGiven = selectedOrder.totalPrice;
+          change = 0;
+        }
+
+        const itemsSubtotal = (selectedOrder.items || []).reduce(
+          (acc, it) => acc + (Number(it.price) || 0) * (Number(it.qty) || 1),
+          0
+        );
+
+        return (
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl p-6 border border-slate-100 animate-in zoom-in-95 max-h-[92vh] flex flex-col">
+              {/* Header Rincian */}
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100 shrink-0">
                 <div>
-                  <span className="text-slate-400 block mb-0.5">Pelanggan</span>
-                  <span className="font-bold text-slate-800 text-sm">
-                    {selectedOrder.customerName}
-                  </span>
-                </div>
-                <div className="text-right">
-                  <span className="text-slate-400 block mb-0.5">Metode Bayar</span>
-                  <span className="font-bold text-slate-800 inline-flex items-center gap-1">
-                    {selectedOrder.paymentMethod === 'QRIS' && (
-                      <QrCode size={13} className="text-orange-600" />
-                    )}
-                    {selectedOrder.paymentMethod || 'Belum Bayar (Kasir)'}
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <span className="text-slate-400 block mb-1">Daftar Menu</span>
-                <div className="space-y-1.5 bg-slate-50 p-3 rounded-xl border border-slate-100 max-h-40 overflow-y-auto">
-                  {selectedOrder.items.map((item, i) => (
-                    <div key={i} className="flex justify-between items-start">
-                      <div className="text-slate-700">
-                        <span>
-                          <strong className="text-slate-900">{item.qty}x</strong> {item.name}
-                        </span>
-                        {item.toppings && (
-                          <span className="text-[10px] text-orange-600 block pl-3">
-                            + {item.toppings}
-                          </span>
-                        )}
-                      </div>
-                      <span className="font-semibold text-slate-900">
-                        {formatRupiah(item.price * item.qty)}
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-slate-800 text-lg">
+                      Detail Transaksi Pesanan
+                    </h3>
+                    {selectedOrder.queueNumber && selectedOrder.queueNumber !== '-' && (
+                      <span className="text-xs font-black bg-orange-100 text-orange-600 px-2.5 py-0.5 rounded-full border border-orange-200">
+                        {selectedOrder.queueNumber}
                       </span>
-                    </div>
-                  ))}
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5 font-mono">
+                    ID: {selectedOrder.id} • {selectedOrder.createdAt}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {getStatusBadge(selectedOrder.status)}
+                  <button
+                    onClick={() => setSelectedOrder(null)}
+                    className="p-1 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
+                  >
+                    <X size={18} />
+                  </button>
                 </div>
               </div>
 
-              {selectedOrder.notes && (
-                <div>
-                  <span className="text-slate-400 block mb-0.5">Catatan Khusus</span>
-                  <div className="p-2.5 rounded-lg bg-amber-50 text-amber-800 border border-amber-100">
-                    {selectedOrder.notes}
+              {/* Body Rincian */}
+              <div className="py-4 space-y-4 text-xs overflow-y-auto flex-1">
+                {/* Info Kasir & Pelanggan */}
+                <div className="grid grid-cols-2 gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200/80">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">
+                      Nama Pelanggan
+                    </span>
+                    <span className="font-bold text-slate-800 text-sm block">
+                      {selectedOrder.customerName}
+                    </span>
+                    <span className="text-[11px] text-slate-500">
+                      Tipe: {selectedOrder.orderType || 'Dine In (Makan Sini)'}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1">
+                      Petugas Kasir
+                    </span>
+                    <span className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+                      <UserCheck size={14} className="text-orange-600 shrink-0" />
+                      <span>{cashierName}</span>
+                    </span>
+                    <span className="text-[11px] text-emerald-600 font-medium">
+                      Outlet Jatiwaringin
+                    </span>
                   </div>
                 </div>
-              )}
 
-              <div className="pt-2 border-t border-slate-100 flex justify-between items-center text-sm font-bold">
-                <span>Total Pembayaran</span>
-                <span className="text-orange-600 text-base">
-                  {formatRupiah(selectedOrder.totalPrice)}
-                </span>
+                {/* Daftar Item Menu yang Dibeli Beserta Kuantitas */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-bold text-slate-700 uppercase tracking-wider text-[11px]">
+                      Item Menu yang Dibeli
+                    </span>
+                    <span className="text-slate-400 text-[11px]">
+                      {selectedOrder.items?.length || 0} jenis menu
+                    </span>
+                  </div>
+
+                  <div className="space-y-2 bg-slate-50/70 p-3 rounded-xl border border-slate-200/80">
+                    {selectedOrder.items && selectedOrder.items.length > 0 ? (
+                      selectedOrder.items.map((item, i) => (
+                        <div
+                          key={i}
+                          className="flex justify-between items-start py-1.5 border-b border-slate-200/50 last:border-0"
+                        >
+                          <div className="flex-1 pr-2">
+                            <div className="font-semibold text-slate-800 text-xs flex items-center gap-1.5">
+                              <span className="px-1.5 py-0.2 bg-orange-100 text-orange-700 rounded font-bold text-[11px]">
+                                {item.qty}x
+                              </span>
+                              <span>{item.name}</span>
+                            </div>
+                            {item.toppings && (
+                              <span className="text-[10px] text-orange-600 block pl-6 mt-0.5">
+                                + Topping: {item.toppings}
+                              </span>
+                            )}
+                            <span className="text-[10px] text-slate-400 block pl-6">
+                              @{formatRupiah(item.price)}
+                            </span>
+                          </div>
+                          <span className="font-bold text-slate-900 text-xs">
+                            {formatRupiah(item.price * item.qty)}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-slate-400 text-center py-2">
+                        Tidak ada data rincian item
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Rincian Finansial: Subtotal, Total, Metode Bayar, Uang Kembalian */}
+                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/80 space-y-2">
+                  <div className="flex justify-between text-slate-600">
+                    <span>Subtotal Menu:</span>
+                    <span className="font-semibold">{formatRupiah(itemsSubtotal || selectedOrder.totalPrice)}</span>
+                  </div>
+
+                  <div className="flex justify-between text-slate-800 font-bold text-sm pt-1 border-t border-slate-200">
+                    <span>Total Pembayaran:</span>
+                    <span className="text-orange-600 font-extrabold text-base">
+                      {formatRupiah(selectedOrder.totalPrice)}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center text-slate-600 pt-1">
+                    <span>Metode Pembayaran:</span>
+                    <span className="font-bold text-slate-800 inline-flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-lg border border-slate-200">
+                      {selectedOrder.paymentMethod === 'QRIS' ? (
+                        <>
+                          <QrCode size={14} className="text-orange-600" />
+                          <span>QRIS MenYum (Dinamis)</span>
+                        </>
+                      ) : selectedOrder.paymentMethod === 'Tunai' ? (
+                        <>
+                          <Banknote size={14} className="text-emerald-600" />
+                          <span>Tunai (Cash di Kasir)</span>
+                        </>
+                      ) : (
+                        <span>{selectedOrder.paymentMethod || 'Belum Bayar'}</span>
+                      )}
+                    </span>
+                  </div>
+
+                  {/* Nominal Kembalian jika Pembayaran Tunai */}
+                  {selectedOrder.paymentMethod === 'Tunai' && (
+                    <div className="mt-2 pt-2 border-t border-dashed border-slate-200 space-y-1">
+                      <div className="flex justify-between text-slate-600">
+                        <span>Uang Tunai Diterima:</span>
+                        <span className="font-bold text-slate-800">
+                          {formatRupiah(cashGiven || selectedOrder.totalPrice)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 font-extrabold">
+                        <span>Uang Kembalian:</span>
+                        <span className="text-sm">
+                          {formatRupiah(change || 0)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Catatan Khusus */}
+                {selectedOrder.notes && (
+                  <div>
+                    <span className="text-slate-400 block mb-1 font-semibold text-[11px]">
+                      Catatan Transaksi / Pesanan
+                    </span>
+                    <div className="p-2.5 rounded-xl bg-amber-50/70 text-amber-900 border border-amber-200 font-mono text-[11px]">
+                      {selectedOrder.notes}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-3 border-t border-slate-100 flex gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onDeleteOrder && onDeleteOrder(selectedOrder.id);
+                    setSelectedOrder(null);
+                  }}
+                  className="px-3.5 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-rose-200"
+                >
+                  <Trash2 size={14} />
+                  <span>Hapus</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-orange-600/20"
+                >
+                  <Printer size={14} />
+                  <span>Cetak Struk</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedOrder(null)}
+                  className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all cursor-pointer text-center"
+                >
+                  Tutup Rincian
+                </button>
               </div>
             </div>
-
-            <div className="pt-2 flex gap-2">
-              <button
-                onClick={() => {
-                  onDeleteOrder && onDeleteOrder(selectedOrder.id);
-                  setSelectedOrder(null);
-                }}
-                className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <Trash2 size={14} />
-                <span>Hapus</span>
-              </button>
-              <button
-                onClick={() => setSelectedOrder(null)}
-                className="flex-1 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
-              >
-                Tutup Rincian
-              </button>
-            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

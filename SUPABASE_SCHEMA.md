@@ -84,7 +84,22 @@ CREATE TABLE IF NOT EXISTS public.site_settings (
 -- 6. PASTIKAN KOLOM DI TABEL YANG SUDAH ADA LENGKAP
 ALTER TABLE public.site_settings 
 ADD COLUMN IF NOT EXISTS video_url TEXT DEFAULT '',
-ADD COLUMN IF NOT EXISTS video_aspect TEXT DEFAULT 'portrait';
+ADD COLUMN IF NOT EXISTS video_aspect TEXT DEFAULT 'portrait',
+ADD COLUMN IF NOT EXISTS qris_image_url TEXT DEFAULT '';
+
+-- 7. SUPABASE STORAGE BUCKETS (PRODUCTS & SETTINGS)
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('products', 'products', true), ('settings', 'settings', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- Policies untuk Storage Supabase
+CREATE POLICY IF NOT EXISTS "Public Read Products" ON storage.objects FOR SELECT USING (bucket_id = 'products');
+CREATE POLICY IF NOT EXISTS "Public Insert Products" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'products');
+CREATE POLICY IF NOT EXISTS "Public Update Products" ON storage.objects FOR UPDATE USING (bucket_id = 'products');
+
+CREATE POLICY IF NOT EXISTS "Public Read Settings" ON storage.objects FOR SELECT USING (bucket_id = 'settings');
+CREATE POLICY IF NOT EXISTS "Public Insert Settings" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'settings');
+CREATE POLICY IF NOT EXISTS "Public Update Settings" ON storage.objects FOR UPDATE USING (bucket_id = 'settings');
 
 -- Opsional: Tabel khusus video beranda jika ingin dipisah
 CREATE TABLE IF NOT EXISTS public.site_videos (
